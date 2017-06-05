@@ -27,7 +27,8 @@ void AAudioManager::BeginPlay()
 	Super::BeginPlay();
 
 	
-	
+	UE_LOG(LogTemp, Warning, TEXT("I EXIST"));
+
 }
 
 // Called every frame
@@ -37,3 +38,31 @@ void AAudioManager::Tick(float DeltaTime)
 
 }
 
+void AAudioManager::PlayAudio()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Play Audio from Manager"));
+}
+
+void AAudioManager::PauseAudio()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Pause Audio from Manager"));
+}
+
+void AAudioManager::NextTrack()
+{
+	// Cache previous index
+	int PreviousAudioTrackIndex = AudioTrackIndex;
+
+	// Stop Current Track
+	PauseAudio();
+
+	// Increment TrackIndex
+	AudioTrackIndex++;
+	if (AudioTrackIndex > AudioMaxTracks - 1)
+	{
+		AudioTrackIndex = 0;
+	}
+
+	// Play New Track
+	UE_LOG(LogTemp, Warning, TEXT("Prev, %d , Next, %d"), PreviousAudioTrackIndex, AudioTrackIndex);
+}

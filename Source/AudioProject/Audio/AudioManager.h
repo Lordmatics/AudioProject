@@ -19,10 +19,20 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Audio")
 		UAudioComponent* AudioComponentB;
 
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		int AudioTrackIndex = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		int AudioMaxTracks = 2;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
 
+	void PlayAudio();
+
+	void PauseAudio();
+
+	void NextTrack();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -10,6 +10,27 @@ class AUDIOPROJECT_API AUser : public APawn
 {
 	GENERATED_BODY()
 
+private:
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		class AAudioManager* AudioManager;
+
+private:
+
+	/** Find Audio Manager in scene, as opposed to manually dragging a reference in*/
+	void InitialiseAudioManager();
+
+	/** Will initiate the sound on the audio manager*/
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void PlaySound();
+
+	/** Will put the sound on the audio manager on hold*/
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void PauseSound();
+
+	/** Will pause the current sound, increment the track, then begin playing that new track*/
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void NextTrack();
+
 public:
 	// Sets default values for this pawn's properties
 	AUser();

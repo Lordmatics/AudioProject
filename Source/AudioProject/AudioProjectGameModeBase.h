@@ -12,8 +12,10 @@ UCLASS()
 class AUDIOPROJECT_API AAudioProjectGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
-	
-	
+
+private:
+	AAudioProjectGameModeBase();
+
+	virtual void BeginPlay() override;
 	
 };
