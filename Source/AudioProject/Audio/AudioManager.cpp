@@ -4,6 +4,11 @@
 #include "AudioManager.h"
 #include "Audio/AudioDataBase.h"
 #include "Utilities/AudioSingleton.h"
+#include "Utilities/StaticHelpers.h"
+
+
+// https://stackoverflow.com/questions/13660777/c-reading-the-data-part-of-a-wav-file
+// ^ Some info on the parsing stuff
 
 // Sets default values
 AAudioManager::AAudioManager()
@@ -25,29 +30,64 @@ AAudioManager::AAudioManager()
 	{
 		AudioDataBase = MyAudioDataBase.Object;
 	}
-	//*NewObject<UAudioSingleton>(UAudioSingleton::StaticClass());
-	TestSoundWave = NewObject<USoundWave>(USoundWave::StaticClass(), TEXT("TestSoundWave"));
-	//TestSoundWave = (USoundWave*)StaticConstructObject(USoundWave::StaticClass(), this, TEXT("TestSoundWave"));
-	//TestSoundWave->SoundGroup = ESoundGroup::SOUNDGROUP_Music;
 
-	bFileLoaded = FFileHelper::LoadFileToArray(RawFile, TEXT("J:\\TestFile.wav"));
+	// This custom importer for wavs, is not working out 
 
-	if (bFileLoaded)
-	{
-		FByteBulkData* BulkData = &TestSoundWave->CompressedFormatData.GetFormat(TEXT("WAV"));
-		BulkData->Lock(LOCK_READ_WRITE);
-		FMemory::Memcpy(BulkData->Realloc(RawFile.Num()), RawFile.GetData(), RawFile.Num());
-		BulkData->Unlock();
+	//TestSoundWave = NewObject<USoundWave>(USoundWave::StaticClass(), TEXT("TestSoundWave"));
 
-		if(GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, FString::FromInt(BulkData->GetBulkDataSize()));
+	//// Import Wav
+	//bFileLoaded = FFileHelper::LoadFileToArray(RawFile, TEXT("J:\\TestFile.wav"));
 
-		UE_LOG(LogTemp, Warning, TEXT("SW Name: %s"), *TestSoundWave->GetName());
+	//if (bFileLoaded)
+	//{
+	//	// Parse the PCM
+	//	const uint8* RawData = (const uint8*)RawFile.GetData();
 
+	//	// Instantiate SoundWave
+	//	USoundWave* NewSound = nullptr;
 
-		AudioComponentB->SetSound(TestSoundWave);
-		AudioComponentB->Play();
-	}
+	//	//// Create a new package
+	//	//FString PackageName = CurrentRecordingDirectory.Path / CurrentRecordingName;
+	//	//UPackage* Package = CreatePackage(nullptr, *PackageName);
+
+	//	//// Create a raw .wav file to stuff the raw PCM data in so when we create the sound wave asset it's identical to a normal imported asset
+	//	int32 NumBytes = 2; // 8 bits in 1byte // Wavs are 16bits, so 2bytes ?
+	//	SerializeWaveFile(RawFile, RawData, NumBytes);
+	//	
+	//	// Compressed data is now out of date.
+	//	NewSound->InvalidateCompressedData();
+
+	//	// Copy the raw wave data file to the sound wave for storage. Will allow the recording to be exported.
+	//	NewSound->RawData.Lock(LOCK_READ_WRITE);
+	//	void* LockedData = NewSound->RawData.Realloc(RawFile.Num());
+	//	FMemory::Memcpy(LockedData, RawFile.GetData(), RawFile.Num());
+	//	NewSound->RawData.Unlock();
+
+	//	// Configure USoundWave
+	//	if (NewSound)
+	//	{
+	//		// Copy the recorded data to the sound wave so we can quickly preview it
+	//		NewSound->RawPCMDataSize = NumBytes;
+	//		NewSound->RawPCMData = (uint8*)FMemory::Malloc(NewSound->RawPCMDataSize);
+	//		FMemory::Memcpy(NewSound->RawPCMData, RawData, NumBytes);
+
+	//		// Calculate the duration of the sound wave
+	//		NewSound->Duration = (float)(NumRecordedSamples / NumInputChannels) / WAVE_FILE_SAMPLERATE;
+	//		NewSound->SampleRate = WAVE_FILE_SAMPLERATE;
+	//		NewSound->NumChannels = NumInputChannels;
+	//	}
+	//	//NewSound->RawData = RawData;
+	//	//FString PackageName = 
+
+	//	FByteBulkData* BulkData = &TestSoundWave->CompressedFormatData.GetFormat(TEXT("WAV"));
+	//	BulkData->Lock(LOCK_READ_WRITE);
+	//	FMemory::Memcpy(BulkData->Realloc(RawFile.Num()), RawFile.GetData(), RawFile.Num());
+	//	BulkData->Unlock();
+
+	//	USoundWave* SoundWave;
+	//	AudioComponentB->SetSound(TestSoundWave);
+	//	AudioComponentB->Play();
+	//}
 }
 
 // Called when the game starts or when spawned
@@ -55,17 +95,20 @@ void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FString GameDir = FPaths::GameDir();
+	// Testing file directory validity - in case wav importer worked
 
-	FString CustomAudio = FPaths::GameDir() + "CustomAudio/";
+	//FString GameDir = FPaths::GameDir();
 
-	bool bExists = FPaths::DirectoryExists(CustomAudio);
+	//FString CustomAudio = FPaths::GameDir() + "CustomAudio/";
 
-	if (bExists)
-	{
-		//FFileHelper::LoadFileToArray()
+	//bool bExists = FPaths::DirectoryExists(CustomAudio);
 
-	}
+	//if (bExists)
+	//{
+	//	//FileNames = UStaticHelpers::GetAllWavsNames();
+	//	//FFileHelper::LoadFileToArray()
+
+	//}
 	//GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, GameDir);
 	//GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, CustomAudio);
 	//GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, bExists ? TEXT("Audio Exists") : TEXT("Audio Doesn't Exist"));
@@ -73,6 +116,113 @@ void AAudioManager::BeginPlay()
 
 	//UE_LOG(LogTemp, Warning, TEXT("BulkData Size: %d"), BulkData->GetBulkDataSize());
 }
+
+//static void WriteUInt32ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint32 Value)
+//{
+//	InByteArray[Index++] = (uint8)(Value >> 0);
+//	InByteArray[Index++] = (uint8)(Value >> 8);
+//	InByteArray[Index++] = (uint8)(Value >> 16);
+//	InByteArray[Index++] = (uint8)(Value >> 24);
+//}
+//
+//static void WriteUInt16ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint16 Value)
+//{
+//	InByteArray[Index++] = (uint8)(Value >> 0);
+//	InByteArray[Index++] = (uint8)(Value >> 8);
+//}
+//
+//void AAudioManager::SerializeWaveFile(TArray<uint8>& OutWaveFileData, const uint8* InPCMData, const int32 NumBytes)
+//{
+//	// Reserve space for the raw wave data
+//	OutWaveFileData.Empty(NumBytes + 44);
+//	OutWaveFileData.AddZeroed(NumBytes + 44);
+//
+//	int32 WaveDataByteIndex = 0;
+//
+//	// Wave Format Serialization ----------
+//
+//	// FieldName: ChunkID
+//	// FieldSize: 4 bytes
+//	// FieldValue: RIFF (FourCC value, big-endian)
+//	OutWaveFileData[WaveDataByteIndex++] = 'R';
+//	OutWaveFileData[WaveDataByteIndex++] = 'I';
+//	OutWaveFileData[WaveDataByteIndex++] = 'F';
+//	OutWaveFileData[WaveDataByteIndex++] = 'F';
+//
+//	// ChunkName: ChunkSize: 4 bytes 
+//	// Value: NumBytes + 36. Size of the rest of the chunk following this number. Size of entire file minus 8 bytes.
+//	WriteUInt32ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, NumBytes + 36);
+//
+//	// FieldName: Format 
+//	// FieldSize: 4 bytes
+//	// FieldValue: "WAVE"  (big-endian)
+//	OutWaveFileData[WaveDataByteIndex++] = 'W';
+//	OutWaveFileData[WaveDataByteIndex++] = 'A';
+//	OutWaveFileData[WaveDataByteIndex++] = 'V';
+//	OutWaveFileData[WaveDataByteIndex++] = 'E';
+//
+//	// FieldName: Subchunk1ID
+//	// FieldSize: 4 bytes
+//	// FieldValue: "fmt "
+//	OutWaveFileData[WaveDataByteIndex++] = 'f';
+//	OutWaveFileData[WaveDataByteIndex++] = 'm';
+//	OutWaveFileData[WaveDataByteIndex++] = 't';
+//	OutWaveFileData[WaveDataByteIndex++] = ' ';
+//
+//	// FieldName: Subchunk1Size
+//	// FieldSize: 4 bytes
+//	// FieldValue: 16 for PCM
+//	WriteUInt32ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, 16);
+//
+//	// FieldName: AudioFormat
+//	// FieldSize: 2 bytes
+//	// FieldValue: 1 for PCM
+//	WriteUInt16ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, 1);
+//
+//	// FieldName: NumChannels
+//	// FieldSize: 2 bytes
+//	// FieldValue: 1 for for mono
+//	WriteUInt16ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, 2);
+//
+//	// FieldName: SampleRate
+//	// FieldSize: 4 bytes
+//	// FieldValue: MIC_SAMPLE_RATE
+//	WriteUInt32ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, 4);
+//
+//	// FieldName: ByteRate
+//	// FieldSize: 4 bytes
+//	// FieldValue: SampleRate * NumChannels * BitsPerSample/8
+//	///int32 ByteRate = WAVE_FILE_SAMPLERATE * NumInputChannels * 2;
+//	WriteUInt32ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, 4);
+//
+//	// FieldName: BlockAlign
+//	// FieldSize: 2 bytes
+//	// FieldValue: NumChannels * BitsPerSample/8
+//	int32 BlockAlign = 2;
+//	WriteUInt16ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, BlockAlign);
+//
+//	// FieldName: BitsPerSample
+//	// FieldSize: 2 bytes
+//	// FieldValue: 16 (16 bits per sample)
+//	WriteUInt16ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, 16);
+//
+//	// FieldName: Subchunk2ID
+//	// FieldSize: 4 bytes
+//	// FieldValue: "data" (big endian)
+//
+//	OutWaveFileData[WaveDataByteIndex++] = 'd';
+//	OutWaveFileData[WaveDataByteIndex++] = 'a';
+//	OutWaveFileData[WaveDataByteIndex++] = 't';
+//	OutWaveFileData[WaveDataByteIndex++] = 'a';
+//
+//	// FieldName: Subchunk2Size
+//	// FieldSize: 4 bytes
+//	// FieldValue: number of bytes of the data
+//	WriteUInt32ToByteArrayLE(OutWaveFileData, WaveDataByteIndex, NumBytes);
+//
+//	// Copy the raw PCM data to the audio file
+//	FMemory::Memcpy(&OutWaveFileData[WaveDataByteIndex], InPCMData, NumBytes);
+//}
 
 // Called every frame
 void AAudioManager::Tick(float DeltaTime)

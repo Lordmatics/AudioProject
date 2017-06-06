@@ -41,6 +41,12 @@ private:
 
 	void BeginAudioTimer(float DeltaTime);
 
+	//void SerializeWaveFile(TArray<uint8>& OutWaveFileData, const uint8* InPCMData, const int32 NumBytes);
+
+	//static void WriteUInt32ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint32 Value);
+
+	//static void WriteUInt16ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint16 Value);
+
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	USoundWave* TestSoundWave;
 
@@ -48,6 +54,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		uint32 bFileLoaded : 1;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		TArray<FString> FileNames;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
