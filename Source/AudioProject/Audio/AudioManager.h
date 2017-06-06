@@ -19,11 +19,27 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Audio")
 		UAudioComponent* AudioComponentB;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		class UAudioDataBase* AudioDataBase;
+
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		int AudioTrackIndex = 0;
 
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		int AudioMaxTracks = 2;
+	FStringAssetReference AudioAssetToLoad;
+
+	FTimerHandle AudioTimer;
+
+	// In Seconds
+	float CurrentTimeInTrack = 0.0f;
+
+	// In Seconds
+	float CurrentMaxTimeInTrack = 1.0f;
+private:
+	bool LoadTrackByID(int32 ID);
+
+	void DoAsyncLoadAudio();
+
+	void BeginAudioTimer(float DeltaTime);
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
@@ -33,6 +49,14 @@ public:
 	void PauseAudio();
 
 	void NextTrack();
+
+	bool IsSoundPlaying();
+
+	void SetTimeInTrack(float NewTime);
+
+	float GetMaxTime();
+
+	float GetCurrentTime();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

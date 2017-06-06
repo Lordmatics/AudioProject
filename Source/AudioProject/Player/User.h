@@ -14,6 +14,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		class AAudioManager* AudioManager;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		TSubclassOf<class AAudioManager> AudioManagerClass;
 private:
 
 	/** Find Audio Manager in scene, as opposed to manually dragging a reference in*/
@@ -21,15 +23,24 @@ private:
 
 	/** Will initiate the sound on the audio manager*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-		void PlaySound();
+		bool PlaySound();
 
 	/** Will put the sound on the audio manager on hold*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-		void PauseSound();
+		bool PauseSound();
 
 	/** Will pause the current sound, increment the track, then begin playing that new track*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-		void NextTrack();
+		bool NextTrack();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		bool IsSoundPlaying();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float GetMaxTimeInTrack();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float GetCurrentTimeInTrack();
 
 public:
 	// Sets default values for this pawn's properties

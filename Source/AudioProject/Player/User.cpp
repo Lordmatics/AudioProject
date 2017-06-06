@@ -3,6 +3,7 @@
 #include "AudioProject.h"
 #include "User.h"
 #include "Audio/AudioManager.h"
+#include "Utilities/StaticHelpers.h"
 
 // Sets default values
 AUser::AUser()
@@ -10,6 +11,11 @@ AUser::AUser()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	static ConstructorHelpers::FClassFinder<AAudioManager> MyAudioManager(TEXT("/Game/BlueprintExtensions/Audio/BP_AudioManager"));
+	if (MyAudioManager.Succeeded())
+	{
+		AudioManagerClass = MyAudioManager.Class;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -18,6 +24,7 @@ void AUser::BeginPlay()
 	Super::BeginPlay();
 	
 	InitialiseAudioManager();
+
 }
 
 // Called every frame
@@ -40,37 +47,70 @@ void AUser::InitialiseAudioManager()
 	UWorld* const World = GetWorld();
 	if (World != nullptr)
 	{
-		// Scan the world for the audio manager
-		for (TActorIterator<AAudioManager> ActorItr(World); ActorItr; ++ActorItr)
-		{
-			AudioManager = *ActorItr;
-		}
+		// This approach is slightly better than iterating the world for
+		// A preplaced audio manager
+		AudioManager = World->SpawnActor<AAudioManager>(AudioManagerClass);
+		//// Scan the world for the audio manager
+		//for (TActorIterator<AAudioManager> ActorItr(World); ActorItr; ++ActorItr)
+		//{
+		//	//AudioManager = *ActorItr;
+		//}
 	}
 }
 
-void AUser::PlaySound()
+bool AUser::PlaySound()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Play Sound Pressed"));
 	if (AudioManager != nullptr)
 	{
 		AudioManager->PlayAudio();
 	}
+	return IsSoundPlaying();
 }
 
-void AUser::PauseSound()
+bool AUser::PauseSound()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Pause Sound Pressed"));
 	if (AudioManager != nullptr)
 	{
 		AudioManager->PauseAudio();
 	}
+	return IsSoundPlaying();
 }
 
-void AUser::NextTrack()
+bool AUser::NextTrack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Next Track Pressed"));
 	if (AudioManager != nullptr)
 	{
 		AudioManager->NextTrack();
 	}
+	return IsSoundPlaying();
+}
+
+bool AUser::IsSoundPlaying()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->IsSoundPlaying();
+	}
+	return false;
+}
+
+float AUser::GetMaxTimeInTrack()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetMaxTime();
+	}
+	return 1.0f;
+}
+
+float AUser::GetCurrentTimeInTrack()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetCurrentTime();
+	}
+	return 0.0f;
 }
