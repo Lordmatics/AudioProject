@@ -34,6 +34,14 @@ private:
 
 	// In Seconds
 	float CurrentMaxTimeInTrack = 1.0f;
+
+	// AudioComponent Volume
+	float Volume = 1.0f;
+
+	// Used to determine whether button should be "Play" or "Resume"
+	// Init to absurd value so when im checking if curr == prev it wont match when its not supposed to
+	int PreviousAudioTrackIndex = 100;
+
 private:
 	bool LoadTrackByID(int32 ID);
 
@@ -74,6 +82,14 @@ public:
 	float GetMaxTime();
 
 	float GetCurrentTime();
+
+	void SetVolume(float NewVolume);
+
+	int GetPreviousIndex() const;
+
+	int GetCurrentIndex() const;
+
+	FString GetTrackName();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

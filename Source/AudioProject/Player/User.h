@@ -42,6 +42,17 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float GetCurrentTimeInTrack();
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void SetVolume(float NewVolume);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		int GetCurrentIndex();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		int GetPreviousIndex();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		FString GetTrackName();
 public:
 	// Sets default values for this pawn's properties
 	AUser();

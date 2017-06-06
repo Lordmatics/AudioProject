@@ -32,6 +32,12 @@ void AUser::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Just a quick hotfix for cursor dissappearing
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC != nullptr)
+	{
+		PC->bShowMouseCursor = true;
+	}
 }
 
 // Called to bind functionality to input
@@ -113,4 +119,39 @@ float AUser::GetCurrentTimeInTrack()
 		return AudioManager->GetCurrentTime();
 	}
 	return 0.0f;
+}
+
+void AUser::SetVolume(float NewVolume)
+{
+	if (AudioManager != nullptr)
+	{
+		AudioManager->SetVolume(NewVolume);
+	}
+}
+
+int AUser::GetCurrentIndex()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetCurrentIndex();
+	}
+	return 0;
+}
+
+int AUser::GetPreviousIndex()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetPreviousIndex();
+	}
+	return 0;
+}
+
+FString AUser::GetTrackName()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetTrackName();
+	}
+	return "";
 }

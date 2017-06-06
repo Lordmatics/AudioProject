@@ -231,7 +231,6 @@ void AAudioManager::Tick(float DeltaTime)
 
 	BeginAudioTimer(DeltaTime);
 
-
 }
 
 // Used to track time throughout the duration of a song
@@ -297,6 +296,9 @@ void AAudioManager::PauseAudio()
 
 void AAudioManager::NextTrack()
 {
+	// Stop Current Track
+	PauseAudio();
+
 	SetTimeInTrack(0.0f);
 	// Doing this here, in case we find a way to dynamically reallocate the array
 	// So if we could load new audio files during runtime, or through a folder etc.
@@ -305,10 +307,9 @@ void AAudioManager::NextTrack()
 	int Count = AudioDataBase ? AudioDataBase->GetArrayLength() : 2;
 
 	// Cache previous index
-	int PreviousAudioTrackIndex = AudioTrackIndex;
+	PreviousAudioTrackIndex = AudioTrackIndex;
 
-	// Stop Current Track
-	PauseAudio();
+
 
 	// Increment TrackIndex
 	AudioTrackIndex++;
@@ -347,4 +348,29 @@ float AAudioManager::GetCurrentTime()
 	float Normalisedtime = CurrentTimeInTrack / CurrentMaxTimeInTrack;
 	// Make sure the progress bar is correct, since 0 / max makes no sense
 	return Normalisedtime > 0.0f ? Normalisedtime : 0.0f;
+}
+
+void AAudioManager::SetVolume(float NewVolume)
+{
+	Volume = NewVolume;
+	if (AudioComponentA != nullptr)
+	{
+		AudioComponentA->SetVolumeMultiplier(NewVolume);
+	}
+}
+
+int AAudioManager::GetCurrentIndex() const
+{
+	return AudioTrackIndex;
+}
+
+int AAudioManager::GetPreviousIndex() const
+{
+	return PreviousAudioTrackIndex;
+}
+
+FString AAudioManager::GetTrackName()
+{
+	if (AudioDataBase == nullptr) return "";
+	return AudioDataBase->GetAudioAtIndex(AudioTrackIndex).AudioName;
 }
