@@ -40,6 +40,14 @@ private:
 	void DoAsyncLoadAudio();
 
 	void BeginAudioTimer(float DeltaTime);
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	USoundWave* TestSoundWave;
+
+	TArray<uint8> RawFile;
+	
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		uint32 bFileLoaded : 1;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();

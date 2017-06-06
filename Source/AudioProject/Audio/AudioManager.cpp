@@ -25,6 +25,29 @@ AAudioManager::AAudioManager()
 	{
 		AudioDataBase = MyAudioDataBase.Object;
 	}
+	//*NewObject<UAudioSingleton>(UAudioSingleton::StaticClass());
+	TestSoundWave = NewObject<USoundWave>(USoundWave::StaticClass(), TEXT("TestSoundWave"));
+	//TestSoundWave = (USoundWave*)StaticConstructObject(USoundWave::StaticClass(), this, TEXT("TestSoundWave"));
+	//TestSoundWave->SoundGroup = ESoundGroup::SOUNDGROUP_Music;
+
+	bFileLoaded = FFileHelper::LoadFileToArray(RawFile, TEXT("J:\\TestFile.wav"));
+
+	if (bFileLoaded)
+	{
+		FByteBulkData* BulkData = &TestSoundWave->CompressedFormatData.GetFormat(TEXT("WAV"));
+		BulkData->Lock(LOCK_READ_WRITE);
+		FMemory::Memcpy(BulkData->Realloc(RawFile.Num()), RawFile.GetData(), RawFile.Num());
+		BulkData->Unlock();
+
+		if(GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, FString::FromInt(BulkData->GetBulkDataSize()));
+
+		UE_LOG(LogTemp, Warning, TEXT("SW Name: %s"), *TestSoundWave->GetName());
+
+
+		AudioComponentB->SetSound(TestSoundWave);
+		AudioComponentB->Play();
+	}
 }
 
 // Called when the game starts or when spawned
@@ -32,9 +55,23 @@ void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	FString GameDir = FPaths::GameDir();
 
-	UE_LOG(LogTemp, Warning, TEXT("I EXIST"));
+	FString CustomAudio = FPaths::GameDir() + "CustomAudio/";
 
+	bool bExists = FPaths::DirectoryExists(CustomAudio);
+
+	if (bExists)
+	{
+		//FFileHelper::LoadFileToArray()
+
+	}
+	//GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, GameDir);
+	//GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, CustomAudio);
+	//GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Red, bExists ? TEXT("Audio Exists") : TEXT("Audio Doesn't Exist"));
+
+
+	//UE_LOG(LogTemp, Warning, TEXT("BulkData Size: %d"), BulkData->GetBulkDataSize());
 }
 
 // Called every frame
@@ -43,6 +80,8 @@ void AAudioManager::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	BeginAudioTimer(DeltaTime);
+
+
 }
 
 // Used to track time throughout the duration of a song
