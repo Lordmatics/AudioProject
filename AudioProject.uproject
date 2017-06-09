@@ -10,15 +10,10 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"CoreUObject",
-				"AudioEditor"
+				"CoreUObject"
 			]
 		}
 	],
 	"Plugins": [
-		{
-			"Name": "AudioCapture",
-			"Enabled": false
-		}
 	]
 }
