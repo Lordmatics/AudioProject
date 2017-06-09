@@ -14,5 +14,11 @@
 				"AudioEditor"
 			]
 		}
+	],
+	"Plugins": [
+		{
+			"Name": "AudioCapture",
+			"Enabled": false
+		}
 	]
 }
