@@ -84,12 +84,12 @@ bool AUser::PauseSound()
 	return IsSoundPlaying();
 }
 
-bool AUser::NextTrack()
+bool AUser::NextTrack(bool Direction)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Next Track Pressed"));
 	if (AudioManager != nullptr)
 	{
-		AudioManager->NextTrack();
+		AudioManager->NextTrack(Direction);
 	}
 	return IsSoundPlaying();
 }
@@ -163,4 +163,21 @@ bool AUser::HasSongChanged()
 		return AudioManager->HasSongChanged();
 	}
 	return false;
+}
+
+void AUser::SetPitch(float NewPitch)
+{
+	if (AudioManager != nullptr)
+	{
+		AudioManager->SetPitch(NewPitch);
+	}
+}
+
+float AUser::GetPitch()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetPitch();
+	}
+	return 1.0f;
 }

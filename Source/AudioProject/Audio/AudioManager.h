@@ -55,15 +55,8 @@ private:
 
 	void InitialiseMaxTime(int Index);
 
-	void AsyncLoad(int Index, FAsyncLoadDelegate& Function);
-	//void SerializeWaveFile(TArray<uint8>& OutWaveFileData, const uint8* InPCMData, const int32 NumBytes);
-
-	//static void WriteUInt32ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint32 Value);
-
-	//static void WriteUInt16ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint16 Value);
-
 	UPROPERTY(EditAnywhere, Category = "Audio")
-	USoundWave* TestSoundWave;
+		USoundWave* TestSoundWave;
 
 	TArray<uint8> RawFile;
 	
@@ -83,7 +76,8 @@ public:
 
 	void PauseAudio();
 
-	void NextTrack();
+	// True = Next , False = Prev
+	void NextTrack(bool Direction);
 
 	bool IsSoundPlaying();
 
@@ -102,6 +96,10 @@ public:
 	FString GetTrackName();
 
 	bool HasSongChanged() const;
+
+	void SetPitch(float NewPitch);
+	
+	float GetPitch();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

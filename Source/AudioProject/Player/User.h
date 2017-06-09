@@ -31,7 +31,7 @@ private:
 
 	/** Will pause the current sound, increment the track, then begin playing that new track*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-		bool NextTrack();
+		bool NextTrack(bool Direction);
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool IsSoundPlaying();
@@ -56,6 +56,13 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool HasSongChanged();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void SetPitch(float NewPitch);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float GetPitch();
+
 public:
 	// Sets default values for this pawn's properties
 	AUser();

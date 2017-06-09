@@ -241,7 +241,7 @@ void AAudioManager::BeginAudioTimer(float DeltaTime)
 {
 	if (IsSoundPlaying())
 	{
-		CurrentTimeInTrack += DeltaTime;
+		CurrentTimeInTrack += DeltaTime * GetPitch();
 	}
 }
 
@@ -252,51 +252,14 @@ bool AAudioManager::LoadTrackByID(int32 ID)
 	return false;
 }
 
-void AAudioManager::AsyncLoad(int Index, FAsyncLoadDelegate& Function)
-{
-	// Wanted to make a way to pass in a custom bind to the CreateUObject function
-	// Didn't seem to accept anything i tried. I'll leave this here
-	// So you can see the attempt.
-
-	//TArray<FStringAssetReference> AudioToLoad;
-	//FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
-	//TArray<FAudio> Audios = AudioDataBase->GetAudios();
-	//AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
-	//AudioToLoad.AddUnique(AudioAssetToLoad);
-	//Function.ExecuteIfBound();
-	//Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, Function));
-	//Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this,)
-}
-
 void AAudioManager::InitialiseMaxTime(int Index)
 {
-	// Failed Attempt
-	//FAsyncLoadDelegate Function;
-	//Function.BindDynamic(this, &AAudioManager::DoAsyncInitialise);
-	////Function.BindUFunction(this, FName("DoAsyncInitialise"));
-	//AsyncLoad(Index, Function);
-	//UE_LOG(LogTemp, Warning, TEXT("Function Bound"));
-
 	TArray<FStringAssetReference> AudioToLoad;
 	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
 	TArray<FAudio> Audios = AudioDataBase->GetAudios();
 	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
 	AudioToLoad.AddUnique(AudioAssetToLoad);
 	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncInitialise));
-
-
-	//UObject* NewTrack = AudioAssetToLoad.ResolveObject();
-	//USoundWave* Track = Cast<USoundWave>(NewTrack);
-	//if (Track != nullptr)
-	//{
-		//CurrentMaxTimeInTrack = Track->GetDuration();
-		//UE_LOG(LogTemp, Warning, TEXT("Index: %d , and Track Duration: %d"), Index, Track->GetDuration());
-		//if(AudioComponentA != nullptr)
-		//{
-		//	AudioComponentA->SetSound(Track);
-		//}
-	//}
-	//Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncLoadAudio));
 }
 
 void AAudioManager::DoAsyncInitialise()
@@ -362,8 +325,9 @@ void AAudioManager::PauseAudio()
 	UE_LOG(LogTemp, Warning, TEXT("Pause Audio from Manager"));
 }
 
-void AAudioManager::NextTrack()
+void AAudioManager::NextTrack(bool Direction = true)
 {
+
 	// Stop Current Track
 	PauseAudio();
 
@@ -379,12 +343,17 @@ void AAudioManager::NextTrack()
 
 
 
-	// Increment TrackIndex
-	AudioTrackIndex++;
+	// Increment / Decrement TrackIndex
+	Direction ? AudioTrackIndex++ : AudioTrackIndex--;
+	//AudioTrackIndex++;
 	bSongChanged = true;
 	if (AudioTrackIndex > Count - 1)
 	{
 		AudioTrackIndex = 0;
+	}
+	else if (AudioTrackIndex < 0)
+	{
+		AudioTrackIndex = Count - 1;
 	}
 
 	// Update Feedback for MaxTime
@@ -452,4 +421,24 @@ FString AAudioManager::GetTrackName()
 bool AAudioManager::HasSongChanged() const
 {
 	return bSongChanged;
+}
+
+// Going to use pitch as a means to activate speed adjustments
+// For fun
+void AAudioManager::SetPitch(float NewPitch)
+{
+	if (AudioComponentA != nullptr)
+	{
+		NewPitch = FMath::Clamp(NewPitch, 0.1f, 4.0f);
+		AudioComponentA->SetPitchMultiplier(NewPitch);
+	}
+}
+
+float AAudioManager::GetPitch()
+{
+	if (AudioComponentA != nullptr)
+	{
+		return AudioComponentA->PitchMultiplier;
+	}
+	return 1.0f;
 }
