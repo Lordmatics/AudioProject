@@ -248,35 +248,23 @@ void AAudioManager::BeginAudioTimer(float DeltaTime)
 bool AAudioManager::LoadTrackByID(int32 ID)
 {
 	AudioDataBase->GetArrayLength();
-	//AsyncLoad(0, AAudioManager::DoAsyncInitialise);
+
+	AsyncLoad(0, (void*)AAudioManager::DoAsyncInitialise);
 	return false;
 }
 
-void AAudioManager::AsyncLoad(int Index, FAsyncLoadDelegate& Function)
+void AAudioManager::AsyncLoad(int Index, void* Function)
 {
-	// Wanted to make a way to pass in a custom bind to the CreateUObject function
-	// Didn't seem to accept anything i tried. I'll leave this here
-	// So you can see the attempt.
-
-	//TArray<FStringAssetReference> AudioToLoad;
-	//FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
-	//TArray<FAudio> Audios = AudioDataBase->GetAudios();
-	//AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
-	//AudioToLoad.AddUnique(AudioAssetToLoad);
-	//Function.ExecuteIfBound();
-	//Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, Function));
-	//Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this,)
+	TArray<FStringAssetReference> AudioToLoad;
+	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
+	TArray<FAudio> Audios = AudioDataBase->GetAudios();
+	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
+	AudioToLoad.AddUnique(AudioAssetToLoad);
+	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, *Function)
 }
 
 void AAudioManager::InitialiseMaxTime(int Index)
 {
-	// Failed Attempt
-	//FAsyncLoadDelegate Function;
-	//Function.BindDynamic(this, &AAudioManager::DoAsyncInitialise);
-	////Function.BindUFunction(this, FName("DoAsyncInitialise"));
-	//AsyncLoad(Index, Function);
-	//UE_LOG(LogTemp, Warning, TEXT("Function Bound"));
-
 	TArray<FStringAssetReference> AudioToLoad;
 	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
 	TArray<FAudio> Audios = AudioDataBase->GetAudios();
@@ -301,7 +289,6 @@ void AAudioManager::InitialiseMaxTime(int Index)
 
 void AAudioManager::DoAsyncInitialise()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Init Ran"));
 	UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
 	USoundWave* Track = Cast<USoundWave>(NewTrack);
 	if (Track != nullptr)

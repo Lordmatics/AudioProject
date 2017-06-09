@@ -5,6 +5,9 @@
 #include "GameFramework/Actor.h"
 #include "AudioManager.generated.h"
 
+
+DECLARE_DYNAMIC_DELEGATE(FAsyncLoadDelegate);
+
 UCLASS()
 class AUDIOPROJECT_API AAudioManager : public AActor
 {
@@ -25,9 +28,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		int AudioTrackIndex = 0;
 
+	// Filled in through Asset Loader from Singleton
 	FStringAssetReference AudioAssetToLoad;
-
-	FTimerHandle AudioTimer;
 
 	// In Seconds
 	float CurrentTimeInTrack = 0.0f;
@@ -52,6 +54,8 @@ private:
 	void BeginAudioTimer(float DeltaTime);
 
 	void InitialiseMaxTime(int Index);
+
+	void AsyncLoad(int Index, FAsyncLoadDelegate& Function);
 	//void SerializeWaveFile(TArray<uint8>& OutWaveFileData, const uint8* InPCMData, const int32 NumBytes);
 
 	//static void WriteUInt32ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint32 Value);
