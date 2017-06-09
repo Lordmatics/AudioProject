@@ -95,6 +95,8 @@ void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	InitialiseMaxTime(0);
+
 	// Testing file directory validity - in case wav importer worked
 
 	//FString GameDir = FPaths::GameDir();
@@ -249,6 +251,43 @@ bool AAudioManager::LoadTrackByID(int32 ID)
 	return false;
 }
 
+void AAudioManager::InitialiseMaxTime(int Index)
+{
+	TArray<FStringAssetReference> AudioToLoad;
+	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
+	TArray<FAudio> Audios = AudioDataBase->GetAudios();
+	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
+	AudioToLoad.AddUnique(AudioAssetToLoad);
+	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncInitialise));
+
+
+	//UObject* NewTrack = AudioAssetToLoad.ResolveObject();
+	//USoundWave* Track = Cast<USoundWave>(NewTrack);
+	//if (Track != nullptr)
+	//{
+		//CurrentMaxTimeInTrack = Track->GetDuration();
+		//UE_LOG(LogTemp, Warning, TEXT("Index: %d , and Track Duration: %d"), Index, Track->GetDuration());
+		//if(AudioComponentA != nullptr)
+		//{
+		//	AudioComponentA->SetSound(Track);
+		//}
+	//}
+	//Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncLoadAudio));
+}
+
+void AAudioManager::DoAsyncInitialise()
+{
+	UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
+	USoundWave* Track = Cast<USoundWave>(NewTrack);
+	if (Track != nullptr)
+	{
+		CurrentMaxTimeInTrack = Track->GetDuration();
+		AudioComponentA->SetSound(Track);
+		//bSongChanged = false;
+		//AudioComponentA->Play(CurrentTimeInTrack);
+	}
+}
+
 void AAudioManager::PlayAudio()
 {
 	if (IsSoundPlaying())
@@ -277,9 +316,13 @@ void AAudioManager::DoAsyncLoadAudio()
 	{
 		UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
 		USoundWave* Track = Cast<USoundWave>(NewTrack);
-		AudioComponentA->SetSound(Track);
-		AudioComponentA->Play(CurrentTimeInTrack);
-		CurrentMaxTimeInTrack = Track->GetDuration();
+		if (Track != nullptr)
+		{
+			CurrentMaxTimeInTrack = Track->GetDuration();
+			AudioComponentA->SetSound(Track);
+			bSongChanged = false;
+			AudioComponentA->Play(CurrentTimeInTrack);
+		}
 		//UE_LOG(LogTemp, Warning, TEXT("MaxTime: %f"), CurrentMaxTimeInTrack);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("ASync Load"));
@@ -313,10 +356,16 @@ void AAudioManager::NextTrack()
 
 	// Increment TrackIndex
 	AudioTrackIndex++;
+	bSongChanged = true;
 	if (AudioTrackIndex > Count - 1)
 	{
 		AudioTrackIndex = 0;
 	}
+
+	// Update Feedback for MaxTime
+	// Important to do it after the index adjustments
+	// To prevent out of bounds exception
+	InitialiseMaxTime(AudioTrackIndex);
 
 	// Play New Track
 	//PlayAudio();
@@ -373,4 +422,9 @@ FString AAudioManager::GetTrackName()
 {
 	if (AudioDataBase == nullptr) return "";
 	return AudioDataBase->GetAudioAtIndex(AudioTrackIndex).AudioName;
+}
+
+bool AAudioManager::HasSongChanged() const
+{
+	return bSongChanged;
 }

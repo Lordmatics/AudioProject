@@ -53,6 +53,9 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		FString GetTrackName();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		bool HasSongChanged();
 public:
 	// Sets default values for this pawn's properties
 	AUser();

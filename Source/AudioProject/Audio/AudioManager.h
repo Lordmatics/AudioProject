@@ -47,8 +47,11 @@ private:
 
 	void DoAsyncLoadAudio();
 
+	void DoAsyncInitialise();
+
 	void BeginAudioTimer(float DeltaTime);
 
+	void InitialiseMaxTime(int Index);
 	//void SerializeWaveFile(TArray<uint8>& OutWaveFileData, const uint8* InPCMData, const int32 NumBytes);
 
 	//static void WriteUInt32ToByteArrayLE(TArray<uint8>& InByteArray, int32& Index, const uint32 Value);
@@ -65,6 +68,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		TArray<FString> FileNames;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		uint32 bSongChanged : 1;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
@@ -90,6 +96,8 @@ public:
 	int GetCurrentIndex() const;
 
 	FString GetTrackName();
+
+	bool HasSongChanged() const;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -155,3 +155,12 @@ FString AUser::GetTrackName()
 	}
 	return "";
 }
+
+bool AUser::HasSongChanged()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->HasSongChanged();
+	}
+	return false;
+}
