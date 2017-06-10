@@ -242,6 +242,7 @@ void AAudioManager::BeginAudioTimer(float DeltaTime)
 	if (IsSoundPlaying())
 	{
 		CurrentTimeInTrack += DeltaTime * GetPitch();
+		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
 	}
 }
 
@@ -408,9 +409,9 @@ float AAudioManager::GetCurrentTime()
 
 void AAudioManager::SetVolume(float NewVolume)
 {
-	Volume = NewVolume;
 	if (AudioComponentA != nullptr)
 	{
+		NewVolume = FMath::Clamp(NewVolume, 0.1f, 1.0f);
 		AudioComponentA->SetVolumeMultiplier(NewVolume);
 	}
 }

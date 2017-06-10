@@ -38,7 +38,7 @@ private:
 	float CurrentMaxTimeInTrack = 1.0f;
 
 	// AudioComponent Volume
-	float Volume = 1.0f;
+	//float Volume = 1.0f;
 
 	// Used to determine whether button should be "Play" or "Resume"
 	// Init to absurd value so when im checking if curr == prev it wont match when its not supposed to
