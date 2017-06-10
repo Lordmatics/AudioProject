@@ -63,6 +63,9 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float GetPitch();
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		UTexture2D* GetBackgroundImage();
+
 public:
 	// Sets default values for this pawn's properties
 	AUser();

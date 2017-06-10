@@ -181,3 +181,12 @@ float AUser::GetPitch()
 	}
 	return 1.0f;
 }
+
+UTexture2D* AUser::GetBackgroundImage()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetCurrentBackgroundImage();
+	}
+	return nullptr;
+}

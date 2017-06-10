@@ -21,6 +21,9 @@ struct FAudio
 	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio ID"))
 		int32 AudioID;
 
+	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio Image"))
+		UTexture2D* BackgroundImage;
+
 	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio Asset"))
 		TAssetPtr<USoundWave> AudioResource;
 
@@ -28,6 +31,7 @@ struct FAudio
 	{
 		AudioName = "";
 		AudioID = 0;
+		BackgroundImage = nullptr;
 		AudioResource = FStringAssetReference("");
 	}
 };

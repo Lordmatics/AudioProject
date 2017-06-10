@@ -252,6 +252,17 @@ bool AAudioManager::LoadTrackByID(int32 ID)
 	return false;
 }
 
+void AAudioManager::SetCurrentBackgroundImageAtIndex(int Index)
+{
+	TArray<FAudio> Audios = AudioDataBase->GetAudios();
+	CurrentBackgroundImage = Audios[Index].BackgroundImage;
+}
+
+UTexture2D* AAudioManager::GetCurrentBackgroundImage()
+{
+	return CurrentBackgroundImage;
+}
+
 void AAudioManager::InitialiseMaxTime(int Index)
 {
 	TArray<FStringAssetReference> AudioToLoad;
@@ -260,6 +271,8 @@ void AAudioManager::InitialiseMaxTime(int Index)
 	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
 	AudioToLoad.AddUnique(AudioAssetToLoad);
 	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncInitialise));
+
+	SetCurrentBackgroundImageAtIndex(Index);
 }
 
 void AAudioManager::DoAsyncInitialise()

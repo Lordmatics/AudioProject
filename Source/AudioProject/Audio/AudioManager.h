@@ -58,6 +58,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		USoundWave* TestSoundWave;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		UTexture2D* CurrentBackgroundImage;
+
 	TArray<uint8> RawFile;
 	
 	UPROPERTY(EditAnywhere, Category = "Audio")
@@ -100,6 +103,10 @@ public:
 	void SetPitch(float NewPitch);
 	
 	float GetPitch();
+
+	void SetCurrentBackgroundImageAtIndex(int Index);
+
+	UTexture2D* GetCurrentBackgroundImage();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
