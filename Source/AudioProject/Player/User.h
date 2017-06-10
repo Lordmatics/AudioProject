@@ -25,6 +25,10 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool PlaySound();
 
+	/** Will initiate the sound on the audio manager from the beginning*/
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		bool PlaySoundFromStart();
+
 	/** Will put the sound on the audio manager on hold*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool PauseSound();
@@ -65,6 +69,9 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		UTexture2D* GetBackgroundImage();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		bool ToggleAutoPlay();
 
 public:
 	// Sets default values for this pawn's properties

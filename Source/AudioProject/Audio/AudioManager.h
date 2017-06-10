@@ -28,6 +28,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		int AudioTrackIndex = 0;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		float MaxPitch = 2.0f;
+	
 	// Filled in through Asset Loader from Singleton
 	FStringAssetReference AudioAssetToLoad;
 
@@ -55,6 +58,8 @@ private:
 
 	void InitialiseMaxTime(int Index);
 
+	void AutoPlayNextTrack();
+
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		USoundWave* TestSoundWave;
 
@@ -71,16 +76,21 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		uint32 bSongChanged : 1;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		uint32 bAutoPlay : 1;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
 
 	void PlayAudio();
 
+	void PlayAudioFromStart();
+
 	void PauseAudio();
 
 	// True = Next , False = Prev
-	void NextTrack(bool Direction);
+	void NextTrack(bool Direction = true);
 
 	bool IsSoundPlaying();
 
@@ -107,6 +117,11 @@ public:
 	void SetCurrentBackgroundImageAtIndex(int Index);
 
 	UTexture2D* GetCurrentBackgroundImage();
+
+	bool ToggleAutoPlay();
+
+	UFUNCTION()
+		void OnAudioFinished();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

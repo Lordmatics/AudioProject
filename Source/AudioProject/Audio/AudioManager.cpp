@@ -25,7 +25,7 @@ AAudioManager::AAudioManager()
 	AudioComponentB = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponentB"));
 	AudioComponentB->SetupAttachment(MyRoot);
 
-	static ConstructorHelpers::FObjectFinder<UAudioDataBase> MyAudioDataBase(TEXT("/Game/Audio/AudioDataBase"));
+	ConstructorHelpers::FObjectFinder<UAudioDataBase> MyAudioDataBase(TEXT("/Game/Audio/AudioDataBase"));
 	if (MyAudioDataBase.Succeeded())
 	{
 		AudioDataBase = MyAudioDataBase.Object;
@@ -94,6 +94,9 @@ AAudioManager::AAudioManager()
 void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AudioComponentA->OnAudioFinished.AddDynamic(this, &AAudioManager::OnAudioFinished);
+
 
 	InitialiseMaxTime(0);
 
@@ -235,6 +238,30 @@ void AAudioManager::Tick(float DeltaTime)
 
 }
 
+void AAudioManager::AutoPlayNextTrack()
+{
+	if (bAutoPlay)
+	{
+		NextTrack();
+		PlayAudio();
+	}
+}
+
+void AAudioManager::OnAudioFinished()
+{
+	// Unfortunately by default this runs, when audio is "Stopped" as well as when it reaches the end
+	// SO, I need to add a constraint
+
+	// - 0.5f little buffer to make sure it always works
+	if (CurrentTimeInTrack >= CurrentMaxTimeInTrack - 0.5f)
+	{
+		AutoPlayNextTrack();
+
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("OnAudioFinshed"));
+}
+
 // Used to track time throughout the duration of a song
 // Such that it can be resumed at the right moment
 void AAudioManager::BeginAudioTimer(float DeltaTime)
@@ -290,6 +317,18 @@ void AAudioManager::DoAsyncInitialise()
 	}
 }
 
+void AAudioManager::PlayAudioFromStart()
+{
+	// Stop the track where it currently is
+	PauseAudio();
+
+	// Reset timer in track
+	CurrentTimeInTrack = 0.0f;
+
+	// Resume from the beginning
+	AudioComponentA->Play(0.0f);
+}
+
 void AAudioManager::PlayAudio()
 {
 	if (IsSoundPlaying())
@@ -339,7 +378,7 @@ void AAudioManager::PauseAudio()
 	UE_LOG(LogTemp, Warning, TEXT("Pause Audio from Manager"));
 }
 
-void AAudioManager::NextTrack(bool Direction = true)
+void AAudioManager::NextTrack(bool Direction)
 {
 
 	// Stop Current Track
@@ -443,8 +482,9 @@ void AAudioManager::SetPitch(float NewPitch)
 {
 	if (AudioComponentA != nullptr)
 	{
-		NewPitch = FMath::Clamp(NewPitch, 0.1f, 4.0f);
-		AudioComponentA->SetPitchMultiplier(NewPitch);
+		// Pitch / Speed Range - between 0.1f and MaxPitch
+		NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f);
+		AudioComponentA->SetPitchMultiplier(NewPitch * MaxPitch);
 	}
 }
 
@@ -455,4 +495,17 @@ float AAudioManager::GetPitch()
 		return AudioComponentA->PitchMultiplier;
 	}
 	return 1.0f;
+}
+
+bool AAudioManager::ToggleAutoPlay()
+{
+	// Logically, what this'll do, if you toggle to autoplay
+	// At the end of a track already
+	// It should know to proceed to the next track without further input
+	bAutoPlay = !bAutoPlay;
+	if (CurrentTimeInTrack >= CurrentMaxTimeInTrack)
+	{
+		AutoPlayNextTrack();
+	}	
+	return bAutoPlay;
 }
