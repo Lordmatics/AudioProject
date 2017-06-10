@@ -53,9 +53,6 @@ private:
 		int GetCurrentIndex();
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-		int GetPreviousIndex();
-
-	UFUNCTION(BlueprintCallable, Category = "Audio")
 		FString GetTrackName();
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")

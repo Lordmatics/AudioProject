@@ -19,9 +19,6 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Audio")
 		UAudioComponent* AudioComponentA;
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "Audio")
-		UAudioComponent* AudioComponentB;
-
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		class UAudioDataBase* AudioDataBase;
 
@@ -43,13 +40,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		uint32 bTrackFinished : 1;
 
-	// AudioComponent Volume
-	//float Volume = 1.0f;
-
-	// Used to determine whether button should be "Play" or "Resume"
-	// Init to absurd value so when im checking if curr == prev it wont match when its not supposed to
-	int PreviousAudioTrackIndex = 100;
-
 private:
 	bool LoadTrackByID(int32 ID);
 
@@ -64,18 +54,7 @@ private:
 	void AutoPlayNextTrack();
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
-		USoundWave* TestSoundWave;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
 		UTexture2D* CurrentBackgroundImage;
-
-	TArray<uint8> RawFile;
-	
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		uint32 bFileLoaded : 1;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		TArray<FString> FileNames;
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		uint32 bSongChanged : 1;

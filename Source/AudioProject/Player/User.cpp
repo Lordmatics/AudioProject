@@ -147,15 +147,6 @@ int AUser::GetCurrentIndex()
 	return 0;
 }
 
-int AUser::GetPreviousIndex()
-{
-	if (AudioManager != nullptr)
-	{
-		return AudioManager->GetPreviousIndex();
-	}
-	return 0;
-}
-
 FString AUser::GetTrackName()
 {
 	if (AudioManager != nullptr)
