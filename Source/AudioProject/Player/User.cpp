@@ -208,3 +208,46 @@ bool AUser::ToggleAutoPlay()
 	}
 	return false;
 }
+
+bool AUser::IsTrackFinished()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->HasTrackFinished();
+	}
+	return false;
+}
+
+void AUser::SavePitch(float CachedPitch)
+{
+	if (AudioManager != nullptr)
+	{
+		AudioManager->SavePitch(CachedPitch);
+	}
+}
+
+void AUser::SaveVolume(float CachedVolume)
+{
+	if (AudioManager != nullptr)
+	{
+		AudioManager->SaveVolume(CachedVolume);
+	}
+}
+
+float AUser::LoadPitch()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->LoadPitch();
+	}
+	return 1.0f;
+}
+
+float AUser::LoadVolume()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->LoadVolume();
+	}
+	return 1.0f;
+}

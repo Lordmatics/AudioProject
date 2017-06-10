@@ -73,6 +73,21 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool ToggleAutoPlay();
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		bool IsTrackFinished();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void SavePitch(float CachedPitch);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void SaveVolume(float CachedVolume);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float LoadPitch();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float LoadVolume();
+
 public:
 	// Sets default values for this pawn's properties
 	AUser();

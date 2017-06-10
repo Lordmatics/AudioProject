@@ -40,6 +40,9 @@ private:
 	// In Seconds
 	float CurrentMaxTimeInTrack = 1.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		uint32 bTrackFinished : 1;
+
 	// AudioComponent Volume
 	//float Volume = 1.0f;
 
@@ -79,6 +82,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		uint32 bAutoPlay : 1;
+
+	class USavedData* SavedData;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
@@ -122,6 +127,19 @@ public:
 
 	UFUNCTION()
 		void OnAudioFinished();
+
+	inline bool HasTrackFinished() const
+	{
+		return bTrackFinished;
+	}
+
+	void SavePitch(float NewPitch);
+
+	void SaveVolume(float NewVolume);
+
+	float LoadPitch();
+
+	float LoadVolume();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

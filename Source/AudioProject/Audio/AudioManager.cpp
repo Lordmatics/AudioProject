@@ -5,7 +5,7 @@
 #include "Audio/AudioDataBase.h"
 #include "Utilities/AudioSingleton.h"
 #include "Utilities/StaticHelpers.h"
-
+#include "SaveFile/SavedData.h"
 
 // https://stackoverflow.com/questions/13660777/c-reading-the-data-part-of-a-wav-file
 // ^ Some info on the parsing stuff
@@ -94,6 +94,10 @@ AAudioManager::AAudioManager()
 void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Load in saved data
+	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	SavedData = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
 
 	AudioComponentA->OnAudioFinished.AddDynamic(this, &AAudioManager::OnAudioFinished);
 
@@ -245,6 +249,11 @@ void AAudioManager::AutoPlayNextTrack()
 		NextTrack();
 		PlayAudio();
 	}
+	else
+	{
+		bTrackFinished = true;
+		//PauseAudio();
+	}
 }
 
 void AAudioManager::OnAudioFinished()
@@ -327,15 +336,28 @@ void AAudioManager::PlayAudioFromStart()
 
 	// Resume from the beginning
 	AudioComponentA->Play(0.0f);
+
+	bTrackFinished = false;
 }
 
 void AAudioManager::PlayAudio()
 {
+	// At the end of the track
+	// Play should restart
+	if (HasTrackFinished())
+	{
+		PlayAudioFromStart();
+		return;
+	}
+	// During a track
+	// Play should pause
 	if (IsSoundPlaying())
 	{
 		PauseAudio();
 		return;
 	}
+	// If there is no track playing
+	// Initiate the current track
 	UE_LOG(LogTemp, Warning, TEXT("Play Audio from Manager"));
 	if (AudioComponentA)
 	{
@@ -362,6 +384,7 @@ void AAudioManager::DoAsyncLoadAudio()
 			CurrentMaxTimeInTrack = Track->GetDuration();
 			AudioComponentA->SetSound(Track);
 			bSongChanged = false;
+			bTrackFinished = false;
 			AudioComponentA->Play(CurrentTimeInTrack);
 		}
 		//UE_LOG(LogTemp, Warning, TEXT("MaxTime: %f"), CurrentMaxTimeInTrack);
@@ -380,6 +403,9 @@ void AAudioManager::PauseAudio()
 
 void AAudioManager::NextTrack(bool Direction)
 {
+
+	// Reset end of track flag
+	bTrackFinished = false;
 
 	// Stop Current Track
 	PauseAudio();
@@ -452,6 +478,9 @@ void AAudioManager::SetVolume(float NewVolume)
 	{
 		NewVolume = FMath::Clamp(NewVolume, 0.1f, 1.0f);
 		AudioComponentA->SetVolumeMultiplier(NewVolume);
+		// Dont save here - quite expensive
+		// Now doing it OnMouseEnd in UMG
+		//SaveVolume(NewVolume);
 	}
 }
 
@@ -483,8 +512,11 @@ void AAudioManager::SetPitch(float NewPitch)
 	if (AudioComponentA != nullptr)
 	{
 		// Pitch / Speed Range - between 0.1f and MaxPitch
-		NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f);
-		AudioComponentA->SetPitchMultiplier(NewPitch * MaxPitch);
+		NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
+		AudioComponentA->SetPitchMultiplier(NewPitch);
+		// Dont save here - quite expensive
+		// Now doing it OnMouseEnd in UMG
+		//SavePitch(NewPitch);
 	}
 }
 
@@ -508,4 +540,65 @@ bool AAudioManager::ToggleAutoPlay()
 		AutoPlayNextTrack();
 	}	
 	return bAutoPlay;
+}
+
+void AAudioManager::SavePitch(float NewPitch)
+{
+	if (SavedData == nullptr)
+	{
+		SavedData = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	}
+	SavedData->SavedPitch = NewPitch;
+
+	//USavedData* SaveGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	////NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
+	//SaveGameInstance->SavedPitch = NewPitch;
+	UE_LOG(LogTemp, Warning, TEXT("SavePitch : %f"), NewPitch);
+
+	UGameplayStatics::SaveGameToSlot(SavedData, SavedData->SaveSlotName, SavedData->UserIndex);
+}
+
+void AAudioManager::SaveVolume(float NewVolume)
+{
+	if (SavedData == nullptr)
+	{
+		SavedData = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	}
+	SavedData->SavedVolume = NewVolume;
+
+	//USavedData* SaveGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	//SaveGameInstance->SavedVolume = NewVolume;
+	UE_LOG(LogTemp, Warning, TEXT("SaveVolume : %f"), NewVolume);
+
+	UGameplayStatics::SaveGameToSlot(SavedData, SavedData->SaveSlotName, SavedData->UserIndex);
+}
+
+float AAudioManager::LoadPitch()
+{
+	if (SavedData == nullptr)
+	{
+		return 0.5f;
+	}
+	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(SavedData->SaveSlotName, SavedData->UserIndex));
+	if (LoadGameInstance == nullptr) return 0.5f;
+
+	float NewPitch = LoadGameInstance->SavedPitch;
+	UE_LOG(LogTemp, Warning, TEXT("LoadPitch : %f"), NewPitch);
+	SetPitch(NewPitch);
+	return NewPitch;
+}
+
+float AAudioManager::LoadVolume()
+{
+	if (SavedData == nullptr)
+	{
+		return 0.5f;
+	}
+	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(SavedData->SaveSlotName, SavedData->UserIndex));
+	if (LoadGameInstance == nullptr) return 0.5f;
+	float NewVolume = LoadGameInstance->SavedVolume;
+	UE_LOG(LogTemp, Warning, TEXT("LoadVolume : %f"), NewVolume);
+	SetVolume(NewVolume);
+	return LoadGameInstance->SavedVolume;
+
 }
