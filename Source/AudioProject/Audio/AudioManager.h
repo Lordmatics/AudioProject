@@ -110,10 +110,19 @@ public:
 	// Inline Setters
 	void SetCurrentBackgroundImageAtIndex(int Index);
 
+	// In seconds
 	FORCEINLINE void SetTimeInTrack(float NewTime)
 	{
 		// Get Max Song Length - Check Limits
 		CurrentTimeInTrack = NewTime;
+		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
+	}
+
+	// In Slider Values
+	FORCEINLINE void SetTimeInTrackBySlider(float NewTime)
+	{
+		CurrentTimeInTrack = NewTime * CurrentMaxTimeInTrack;
+		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
 	}
 
 	// Going to use pitch as a means to activate speed adjustments
@@ -144,6 +153,7 @@ public:
 	// Inline Getters
 	FString GetTrackName() const;
 
+	// In Slider Values
 	FORCEINLINE float GetCurrentTime() const
 	{
 		float Normalisedtime = CurrentTimeInTrack / CurrentMaxTimeInTrack;

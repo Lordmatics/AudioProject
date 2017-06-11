@@ -132,7 +132,7 @@ void AAudioManager::PlayAudioFromStart()
 	PauseAudio();
 
 	// Reset timer in track
-	CurrentTimeInTrack = 0.0f;
+	SetTimeInTrack(0.0f);
 
 	// Resume from the beginning
 	if (AudioComponentA != nullptr)

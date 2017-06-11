@@ -85,6 +85,9 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float LoadVolume();
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void SetTimeBySlider(float NewTime);
+
 public:
 	// Sets default values for this pawn's properties
 	AUser();

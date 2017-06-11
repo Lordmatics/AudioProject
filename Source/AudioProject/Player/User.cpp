@@ -242,3 +242,11 @@ float AUser::LoadVolume()
 	}
 	return 1.0f;
 }
+
+void AUser::SetTimeBySlider(float NewTime)
+{
+	if (AudioManager != nullptr)
+	{
+		AudioManager->SetTimeInTrackBySlider(NewTime);
+	}
+}
