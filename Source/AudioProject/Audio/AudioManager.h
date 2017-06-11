@@ -13,63 +13,89 @@ class AUDIOPROJECT_API AAudioManager : public AActor
 {
 	GENERATED_BODY()
 private:
+	/** Root of object*/
 	UPROPERTY(VisibleDefaultsOnly, Category = "Root")
 		USceneComponent* MyRoot;
 
+	/** Component to have more control over sound waves*/
 	UPROPERTY(VisibleDefaultsOnly, Category = "Audio")
 		UAudioComponent* AudioComponentA;
 
+	/** Storage for audio variables - image, sound, index, name etc*/
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		class UAudioDataBase* AudioDataBase;
 
+	/** Storage for remembering volume and pitch*/
+	UPROPERTY()
+		class USavedData* SavedData;
+
+	/** Filled in through Asset Loader from Singleton*/
+	FStringAssetReference AudioAssetToLoad;
+
+	/** Pointer to current image from database*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		UTexture2D* CurrentBackgroundImage;
+
+private:
+	/** Flag to determine what should occur at the end of a song*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		uint32 bTrackFinished : 1;
+
+	/** Set to true when track has changed, used in updating UI*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		uint32 bSongChanged : 1;
+
+	/** Flag to determine whether playlist should continue at the end of a song*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		uint32 bAutoPlay : 1;
+
+	/** Alternate flag to autoplay, used to determine whether same song should repeat*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		uint32 bLoop : 1;
+
+private:
+	/** Current array index from audios in database*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		int AudioTrackIndex = 0;
 
+private:
+	/** Modifier for slider Pitch*/
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		float MaxPitch = 2.0f;
-	
-	// Filled in through Asset Loader from Singleton
-	FStringAssetReference AudioAssetToLoad;
 
-	// In Seconds
-	float CurrentTimeInTrack = 0.0f;
+	/** In Seconds*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		float CurrentTimeInTrack = 0.0f;
 
-	// In Seconds
-	float CurrentMaxTimeInTrack = 1.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		uint32 bTrackFinished : 1;
+	/** In Seconds*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		float CurrentMaxTimeInTrack = 1.0f;
 
 private:
-	bool LoadTrackByID(int32 ID);
-
+	/** Loads and begins playing audio using singletons asset loader*/
 	void DoAsyncLoadAudio();
 
+	/** Loads audio using singletons asset loader*/
 	void DoAsyncInitialise();
 
+	/** Steps through the song in seconds if sound is playing from the audio component*/
 	void BeginAudioTimer(float DeltaTime);
 
+	/** Configures first song settings from database on play*/
 	void InitialiseMaxTime(int Index);
 
+	/** Used to launch next track during autoplay mode, but also sets song to restart if loop mode*/
 	void AutoPlayNextTrack();
 
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		UTexture2D* CurrentBackgroundImage;
+	/** Bound function to call AutoPlayNextTrack, if requirements are met*/
+	UFUNCTION()
+		void OnAudioFinished();
 
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		uint32 bSongChanged : 1;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		uint32 bAutoPlay : 1;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
-		uint32 bLoop : 1;
-
-	class USavedData* SavedData;
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
 
+	// Fundamental Audio Control Functions
 	void PlayAudio();
 
 	void PlayAudioFromStart();
@@ -78,45 +104,79 @@ public:
 
 	// True = Next , False = Prev
 	void NextTrack(bool Direction = true);
-
-	bool IsSoundPlaying();
-
-	void SetTimeInTrack(float NewTime);
-
-	float GetMaxTime();
-
-	float GetCurrentTime();
-
-	void SetVolume(float NewVolume);
-
-	int GetCurrentIndex() const;
-
-	FString GetTrackName();
-
-	bool HasSongChanged() const;
-
-	void SetPitch(float NewPitch);
 	
-	void SetCurrentBackgroundImageAtIndex(int Index);
-
-	UTexture2D* GetCurrentBackgroundImage();
-
 	bool ToggleAutoPlay();
 
+	// Inline Setters
+	void SetCurrentBackgroundImageAtIndex(int Index);
 
+	FORCEINLINE void SetTimeInTrack(float NewTime)
+	{
+		// Get Max Song Length - Check Limits
+		CurrentTimeInTrack = NewTime;
+	}
 
-	UFUNCTION()
-		void OnAudioFinished();
+	// Going to use pitch as a means to activate speed adjustments
+	// For fun
+	inline void SetPitch(float NewPitch)
+	{
+		if (AudioComponentA != nullptr)
+		{
+			// Pitch / Speed Range - between 0.1f and MaxPitch
+			NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
+			AudioComponentA->SetPitchMultiplier(NewPitch);
+			// Dont save here - quite expensive
+			// Now doing it OnMouseEnd in UMG
+		}
+	}
 
-
+	inline void SetVolume(float NewVolume)
+	{
+		if (AudioComponentA != nullptr)
+		{
+			NewVolume = FMath::Clamp(NewVolume, 0.1f, 1.0f);
+			AudioComponentA->SetVolumeMultiplier(NewVolume);
+			// Dont save here - quite expensive
+			// Now doing it OnMouseEnd in UMG
+		}
+	}
 
 	// Inline Getters
-	inline bool HasTrackFinished() const
+	FString GetTrackName() const;
+
+	FORCEINLINE float GetCurrentTime() const
+	{
+		float Normalisedtime = CurrentTimeInTrack / CurrentMaxTimeInTrack;
+		// Make sure the progress bar is correct, since 0 / max makes no sense
+		return Normalisedtime > 0.0f ? Normalisedtime : 0.0f;
+	}
+
+	FORCEINLINE float GetMaxTime() const
+	{
+		return CurrentMaxTimeInTrack;
+	}
+
+	FORCEINLINE UTexture2D* GetCurrentBackgroundImage() const
+	{
+		return CurrentBackgroundImage;
+	}
+
+	FORCEINLINE int GetCurrentIndex() const
+	{
+		return AudioTrackIndex;
+	}
+
+	FORCEINLINE bool HasSongChanged() const
+	{
+		return bSongChanged;
+	}
+
+	FORCEINLINE bool HasTrackFinished() const
 	{
 		return bTrackFinished;
 	}
 
-	inline bool CheckForReplay() const
+	FORCEINLINE bool CheckForReplay() const
 	{
 		return bLoop;
 	}
@@ -129,6 +189,16 @@ public:
 		}
 		return 1.0f;
 	}
+
+	inline bool IsSoundPlaying() const
+	{
+		if (AudioComponentA != nullptr)
+		{
+			return AudioComponentA->IsPlaying();
+		}
+		return false;
+	}
+
 	// Saving and Loading
 	void SavePitch(float NewPitch);
 

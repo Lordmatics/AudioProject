@@ -40,8 +40,55 @@ void AAudioManager::BeginPlay()
 
 	AudioComponentA->OnAudioFinished.AddDynamic(this, &AAudioManager::OnAudioFinished);
 
-
 	InitialiseMaxTime(0);
+}
+
+void AAudioManager::OnAudioFinished()
+{
+	// Unfortunately by default this runs, when audio is "Stopped" as well as when it reaches the end
+	// SO, I need to add a constraint
+
+	// - 0.5f little buffer to make sure it always works
+	if (CurrentTimeInTrack >= CurrentMaxTimeInTrack - 0.5f)
+	{
+		AutoPlayNextTrack();
+
+	}
+	UE_LOG(LogTemp, Warning, TEXT("OnAudioFinshed"));
+}
+
+void AAudioManager::InitialiseMaxTime(int Index)
+{
+	TArray<FStringAssetReference> AudioToLoad;
+	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
+	TArray<FAudio> Audios = AudioDataBase->GetAudios();
+	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
+	AudioToLoad.AddUnique(AudioAssetToLoad);
+	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncInitialise));
+
+	SetCurrentBackgroundImageAtIndex(Index);
+}
+
+void AAudioManager::SetCurrentBackgroundImageAtIndex(int Index)
+{
+	TArray<FAudio> Audios = AudioDataBase->GetAudios();
+	CurrentBackgroundImage = Audios[Index].BackgroundImage;
+}
+
+void AAudioManager::DoAsyncInitialise()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Init Ran"));
+	UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
+	USoundWave* Track = Cast<USoundWave>(NewTrack);
+	if (Track != nullptr && AudioComponentA != nullptr)
+	{
+		CurrentMaxTimeInTrack = Track->GetDuration();
+		AudioComponentA->SetSound(Track);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Audio Component or Track NULL : DoAsyncInitialise"));
+	}
 }
 
 // Called every frame
@@ -51,6 +98,15 @@ void AAudioManager::Tick(float DeltaTime)
 
 	BeginAudioTimer(DeltaTime);
 
+}
+
+void AAudioManager::BeginAudioTimer(float DeltaTime)
+{
+	if (IsSoundPlaying())
+	{
+		CurrentTimeInTrack += DeltaTime * GetPitch();
+		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
+	}
 }
 
 void AAudioManager::AutoPlayNextTrack()
@@ -67,77 +123,6 @@ void AAudioManager::AutoPlayNextTrack()
 		{
 			PlayAudioFromStart();
 		}
-		//PauseAudio();
-	}
-}
-
-void AAudioManager::OnAudioFinished()
-{
-	// Unfortunately by default this runs, when audio is "Stopped" as well as when it reaches the end
-	// SO, I need to add a constraint
-
-	// - 0.5f little buffer to make sure it always works
-	if (CurrentTimeInTrack >= CurrentMaxTimeInTrack - 0.5f)
-	{
-		AutoPlayNextTrack();
-
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("OnAudioFinshed"));
-}
-
-// Used to track time throughout the duration of a song
-// Such that it can be resumed at the right moment
-void AAudioManager::BeginAudioTimer(float DeltaTime)
-{
-	if (IsSoundPlaying())
-	{
-		CurrentTimeInTrack += DeltaTime * GetPitch();
-		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
-	}
-}
-
-bool AAudioManager::LoadTrackByID(int32 ID)
-{
-	AudioDataBase->GetArrayLength();
-	//AsyncLoad(0, AAudioManager::DoAsyncInitialise);
-	return false;
-}
-
-void AAudioManager::SetCurrentBackgroundImageAtIndex(int Index)
-{
-	TArray<FAudio> Audios = AudioDataBase->GetAudios();
-	CurrentBackgroundImage = Audios[Index].BackgroundImage;
-}
-
-UTexture2D* AAudioManager::GetCurrentBackgroundImage()
-{
-	return CurrentBackgroundImage;
-}
-
-void AAudioManager::InitialiseMaxTime(int Index)
-{
-	TArray<FStringAssetReference> AudioToLoad;
-	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
-	TArray<FAudio> Audios = AudioDataBase->GetAudios();
-	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
-	AudioToLoad.AddUnique(AudioAssetToLoad);
-	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncInitialise));
-
-	SetCurrentBackgroundImageAtIndex(Index);
-}
-
-void AAudioManager::DoAsyncInitialise()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Init Ran"));
-	UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
-	USoundWave* Track = Cast<USoundWave>(NewTrack);
-	if (Track != nullptr)
-	{
-		CurrentMaxTimeInTrack = Track->GetDuration();
-		AudioComponentA->SetSound(Track);
-		//bSongChanged = false;
-		//AudioComponentA->Play(CurrentTimeInTrack);
 	}
 }
 
@@ -150,8 +135,14 @@ void AAudioManager::PlayAudioFromStart()
 	CurrentTimeInTrack = 0.0f;
 
 	// Resume from the beginning
-	AudioComponentA->Play(0.0f);
-
+	if (AudioComponentA != nullptr)
+	{
+		AudioComponentA->Play(0.0f);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Audio Component NULL : PlayAudioFromStart"));
+	}
 	bTrackFinished = false;
 }
 
@@ -189,19 +180,19 @@ void AAudioManager::PlayAudio()
 void AAudioManager::DoAsyncLoadAudio()
 {
 	UWorld* const World = GetWorld();
-
-	check(AudioAssetToLoad.ResolveObject() != nullptr && World != nullptr)
+	check(AudioAssetToLoad.ResolveObject() != nullptr && World != nullptr && AudioComponentA != nullptr)
 	{
-		UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
-		USoundWave* Track = Cast<USoundWave>(NewTrack);
-		if (Track != nullptr)
-		{
-			CurrentMaxTimeInTrack = Track->GetDuration();
-			AudioComponentA->SetSound(Track);
+		DoAsyncInitialise();
+		//UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
+		//USoundWave* Track = Cast<USoundWave>(NewTrack);
+		//if (Track != nullptr)
+		//{
+		//	CurrentMaxTimeInTrack = Track->GetDuration();
+		//	AudioComponentA->SetSound(Track);
 			bSongChanged = false;
 			bTrackFinished = false;
 			AudioComponentA->Play(CurrentTimeInTrack);
-		}
+		//}
 		//UE_LOG(LogTemp, Warning, TEXT("MaxTime: %f"), CurrentMaxTimeInTrack);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("ASync Load"));
@@ -252,76 +243,6 @@ void AAudioManager::NextTrack(bool Direction)
 
 }
 
-bool AAudioManager::IsSoundPlaying()
-{
-	if (AudioComponentA != nullptr)
-	{
-		return AudioComponentA->IsPlaying();
-	}
-	return false;
-}
-
-void AAudioManager::SetTimeInTrack(float NewTime)
-{
-	// Get Max Song Length - Check Limits
-	CurrentTimeInTrack = NewTime;
-}
-
-float AAudioManager::GetMaxTime()
-{
-	return CurrentMaxTimeInTrack;
-}
-
-float AAudioManager::GetCurrentTime()
-{
-	float Normalisedtime = CurrentTimeInTrack / CurrentMaxTimeInTrack;
-	// Make sure the progress bar is correct, since 0 / max makes no sense
-	return Normalisedtime > 0.0f ? Normalisedtime : 0.0f;
-}
-
-void AAudioManager::SetVolume(float NewVolume)
-{
-	if (AudioComponentA != nullptr)
-	{
-		NewVolume = FMath::Clamp(NewVolume, 0.1f, 1.0f);
-		AudioComponentA->SetVolumeMultiplier(NewVolume);
-		// Dont save here - quite expensive
-		// Now doing it OnMouseEnd in UMG
-		//SaveVolume(NewVolume);
-	}
-}
-
-int AAudioManager::GetCurrentIndex() const
-{
-	return AudioTrackIndex;
-}
-
-FString AAudioManager::GetTrackName()
-{
-	if (AudioDataBase == nullptr) return "";
-	return AudioDataBase->GetAudioAtIndex(AudioTrackIndex).AudioName;
-}
-
-bool AAudioManager::HasSongChanged() const
-{
-	return bSongChanged;
-}
-
-// Going to use pitch as a means to activate speed adjustments
-// For fun
-void AAudioManager::SetPitch(float NewPitch)
-{
-	if (AudioComponentA != nullptr)
-	{
-		// Pitch / Speed Range - between 0.1f and MaxPitch
-		NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
-		AudioComponentA->SetPitchMultiplier(NewPitch);
-		// Dont save here - quite expensive
-		// Now doing it OnMouseEnd in UMG
-		//SavePitch(NewPitch);
-	}
-}
-
 bool AAudioManager::ToggleAutoPlay()
 {
 	// Logically, what this'll do, if you toggle to autoplay
@@ -348,6 +269,13 @@ bool AAudioManager::ToggleAutoPlay()
 	return bAutoPlay;
 }
 
+FString AAudioManager::GetTrackName() const
+{
+	if (AudioDataBase == nullptr) return "";
+	return AudioDataBase->GetAudioAtIndex(AudioTrackIndex).AudioName;
+}
+
+//////////////// SAVING AND LOADING ////////////////
 void AAudioManager::SavePitch(float NewPitch)
 {
 	if (SavedData == nullptr)
