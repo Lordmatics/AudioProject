@@ -19,15 +19,19 @@ public:
 
 	USavedData();
 
+	/** Value to hold the stored pitch*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		float SavedPitch;
 
+	/** Value to hold the stored volume*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		float SavedVolume;
 
+	/** Name of save file*/
 	UPROPERTY(VisibleAnywhere, Category = "Save Requirement")
 		FString SaveSlotName;
 
+	/** Index of save file*/
 	UPROPERTY(VisibleAnywhere, Category = "Save Requirement")
 		uint32 UserIndex;
 	

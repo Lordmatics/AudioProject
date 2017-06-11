@@ -26,7 +26,7 @@ private:
 		class UAudioDataBase* AudioDataBase;
 
 	/** Storage for remembering volume and pitch*/
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = "Audio")	
 		class USavedData* SavedData;
 
 	/** Filled in through Asset Loader from Singleton*/

@@ -36,8 +36,15 @@ void AAudioManager::BeginPlay()
 
 	// Load in saved data
 	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
-	SavedData = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
-
+	if (LoadGameInstance != nullptr)
+	{
+		SavedData = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
+	}
+	else
+	{
+		SavedData = LoadGameInstance;
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("Load: %f %f"), SavedData->SavedPitch, SavedData->SavedVolume);
 	AudioComponentA->OnAudioFinished.AddDynamic(this, &AAudioManager::OnAudioFinished);
 
 	InitialiseMaxTime(0);
@@ -87,7 +94,7 @@ void AAudioManager::DoAsyncInitialise()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Fatal, TEXT("Audio Component or Track NULL : DoAsyncInitialise"));
+		UE_LOG(LogTemp, Warning, TEXT("Audio Component or Track NULL : DoAsyncInitialise"));
 	}
 }
 
@@ -141,7 +148,7 @@ void AAudioManager::PlayAudioFromStart()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Fatal, TEXT("Audio Component NULL : PlayAudioFromStart"));
+		UE_LOG(LogTemp, Warning, TEXT("Audio Component NULL : PlayAudioFromStart"));
 	}
 	bTrackFinished = false;
 }
@@ -282,6 +289,8 @@ void AAudioManager::SavePitch(float NewPitch)
 	{
 		SavedData = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
 	}
+	// If the cast somehow fails, exit to prevent fatal error
+	if (SavedData == nullptr) return;
 	SavedData->SavedPitch = NewPitch;
 
 	//USavedData* SaveGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
@@ -298,6 +307,8 @@ void AAudioManager::SaveVolume(float NewVolume)
 	{
 		SavedData = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
 	}
+	// If the cast somehow fails, exit to prevent fatal error
+	if (SavedData == nullptr) return;
 	SavedData->SavedVolume = NewVolume;
 
 	//USavedData* SaveGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
@@ -311,6 +322,7 @@ float AAudioManager::LoadPitch()
 {
 	if (SavedData == nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("SavedData NULL : LoadPitch"));
 		return 0.5f;
 	}
 	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(SavedData->SaveSlotName, SavedData->UserIndex));
@@ -326,6 +338,7 @@ float AAudioManager::LoadVolume()
 {
 	if (SavedData == nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("SavedData NULL : LoadVolume"));
 		return 0.5f;
 	}
 	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(SavedData->SaveSlotName, SavedData->UserIndex));

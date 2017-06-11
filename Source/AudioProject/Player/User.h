@@ -37,54 +37,71 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool NextTrack(bool Direction);
 
+	/** Returns true if volume > 0.0f and audio is playing*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool IsSoundPlaying();
 
+	/** Returns in seconds how long the current song is*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float GetMaxTimeInTrack();
 
+	/** Returns in seconds how far into the song you are*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float GetCurrentTimeInTrack();
 
+	/** Assigns the new value for audio volume*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SetVolume(float NewVolume);
 
+	/** Returns the index of the current song from the database*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		int GetCurrentIndex();
 
+	/** Returns the name of the current song from the database*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		FString GetTrackName();
 
+	/** Returns true, if track is no longer the track that was most recently played*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool HasSongChanged();
 
+	/** Assigns the new value for audio pitch / speed */
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SetPitch(float NewPitch);
 
+	/** Returns the current pitch after being modified to accompany values above 1.0f*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float GetPitch();
 
+	/** Returns pointer to stored background image based off of the audio database*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		UTexture2D* GetBackgroundImage();
 
+	/** Flip Flops the Auto play bool, and adjusts the loop bool appropriately*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool ToggleAutoPlay();
 
+	/** Returns whether or not the current track has reached the end minus a very short buffer*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool IsTrackFinished();
 
+	/** Updates saved pitch to file*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SavePitch(float CachedPitch);
 
+	/** Updates saved volume to file*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SaveVolume(float CachedVolume);
 
+	/** Loads saved pitch from file*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float LoadPitch();
 
+	/** Loads saved volume from file*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		float LoadVolume();
 
+	/** Updates current song time, after being normalised by song time scrubber*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SetTimeBySlider(float NewTime);
 

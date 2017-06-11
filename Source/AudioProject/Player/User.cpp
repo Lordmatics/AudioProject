@@ -36,7 +36,9 @@ void AUser::Tick(float DeltaTime)
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (PC != nullptr)
 	{
-		PC->bShowMouseCursor = true;
+		// set to true only if its false
+		if(!PC->ShouldShowMouseCursor())
+			PC->bShowMouseCursor = true;
 	}
 }
 

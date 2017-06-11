@@ -10,6 +10,7 @@ UAudioSingleton::UAudioSingleton()
 
 }
 
+/** There can only be one singleton*/
 UAudioSingleton& UAudioSingleton::Get()
 {
 	UAudioSingleton* Singleton = Cast<UAudioSingleton>(GEngine->GameSingleton);
