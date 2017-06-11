@@ -63,6 +63,10 @@ void AAudioManager::AutoPlayNextTrack()
 	else
 	{
 		bTrackFinished = true;
+		if (CheckForReplay())
+		{
+			PlayAudioFromStart();
+		}
 		//PauseAudio();
 	}
 }
@@ -318,15 +322,6 @@ void AAudioManager::SetPitch(float NewPitch)
 	}
 }
 
-float AAudioManager::GetPitch()
-{
-	if (AudioComponentA != nullptr)
-	{
-		return AudioComponentA->PitchMultiplier;
-	}
-	return 1.0f;
-}
-
 bool AAudioManager::ToggleAutoPlay()
 {
 	// Logically, what this'll do, if you toggle to autoplay
@@ -337,6 +332,19 @@ bool AAudioManager::ToggleAutoPlay()
 	{
 		AutoPlayNextTrack();
 	}	
+	// If turning auto play off
+	// Turn looping on
+	if (bAutoPlay == false)
+	{
+		bLoop = true;
+	}
+	// If turning auto play on
+	// Turn looping off
+	else
+	{
+		bLoop = false;
+	}
+	// Return true if autoplay / false if looping
 	return bAutoPlay;
 }
 

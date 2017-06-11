@@ -62,6 +62,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		uint32 bAutoPlay : 1;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		uint32 bLoop : 1;
+
 	class USavedData* SavedData;
 public:	
 	// Sets default values for this actor's properties
@@ -86,8 +89,6 @@ public:
 
 	void SetVolume(float NewVolume);
 
-	int GetPreviousIndex() const;
-
 	int GetCurrentIndex() const;
 
 	FString GetTrackName();
@@ -96,22 +97,39 @@ public:
 
 	void SetPitch(float NewPitch);
 	
-	float GetPitch();
-
 	void SetCurrentBackgroundImageAtIndex(int Index);
 
 	UTexture2D* GetCurrentBackgroundImage();
 
 	bool ToggleAutoPlay();
 
+
+
 	UFUNCTION()
 		void OnAudioFinished();
 
+
+
+	// Inline Getters
 	inline bool HasTrackFinished() const
 	{
 		return bTrackFinished;
 	}
 
+	inline bool CheckForReplay() const
+	{
+		return bLoop;
+	}
+
+	inline float GetPitch()
+	{
+		if (AudioComponentA != nullptr)
+		{
+			return AudioComponentA->PitchMultiplier;
+		}
+		return 1.0f;
+	}
+	// Saving and Loading
 	void SavePitch(float NewPitch);
 
 	void SaveVolume(float NewVolume);
