@@ -88,18 +88,47 @@ void AAudioManager::InitialiseMaxTime(int Index)
 	SetCurrentBackgroundImageAtIndex(Index);
 }
 
+void AAudioManager::FlipFlopImages(int AudioIndex, int ImageIndex)
+{
+	if (AudioDataBase->GetImageArrayLengthAtIndex(AudioIndex) > 0)
+	{
+		// Flip Flop
+		// For slider, rewinding song
+		// need to check if new image, is different from previous image
+
+		// This prevent fading into the same image
+		UE_LOG(LogTemp, Warning, TEXT("Prev Index: %d"), Audios[AudioTrackIndex].PreviousImageIndex);
+		if (ImageIndex != Audios[AudioIndex].PreviousImageIndex)
+		{
+			bImageB = !bImageB;
+			UE_LOG(LogTemp, Warning, TEXT("Alternated Image: bImageB %s"), bImageB ? TEXT("True") : TEXT("False"));
+		}
+
+		Audios[AudioIndex].PreviousImageIndex = ImageIndex;
+		switch (bImageB)
+		{
+			case true:
+			{
+				CurrentBackgroundImageB = Audios[AudioIndex].BackgroundImageArray[ImageIndex];
+				break;
+			}
+			case false:
+			{
+				CurrentBackgroundImageA = Audios[AudioIndex].BackgroundImageArray[ImageIndex];
+				break;
+			}
+		}
+
+	}
+}
+
 void AAudioManager::SetCurrentBackgroundImageAtIndex(int Index)
 {
 	if (AudioDataBase != nullptr)
 	{
 		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
-		if (AudioDataBase->GetImageArrayLengthAtIndex(Index) > 0)
-		{
-			CurrentBackgroundImage = Audios[Index].BackgroundImageArray[0];
-		}
+		FlipFlopImages(Index, 0);	
 	}
-
-
 	// Logic to update fade times
 }
 
@@ -107,6 +136,12 @@ void AAudioManager::RecalculateImage()
 {
 	if (AudioDataBase != nullptr)
 	{
+		// TEST RESET PREV INDEX?
+		//for (size_t i = 0; i < Audios.Num(); i++)
+		//{
+		//	Audios[i].PreviousImageIndex = -1;
+		//}
+
 		int Count = AudioDataBase->GetImageArrayLengthAtIndex(AudioTrackIndex);
 		if (Count > 0)
 		{
@@ -122,13 +157,19 @@ void AAudioManager::RecalculateImage()
 				{
 					// Prevent any out of bounds exception
 					int ImageIndex = i + 1 >= Count ? Count - 1 : i + 1;
-					CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[ImageIndex];
+					//ImageIndex + Audios[AudioTrackIndex].PreviousImageIndex >= Count ? Count - 1 : Audios[AudioTrackIndex].PreviousImageIndex;
+
+					//UE_LOG(LogTemp, Warning, TEXT("Fade image to: %d , bImageB %s"),ImageIndex, bImageB ? TEXT("True") : TEXT("False"));
+					CurrentImageIndex = ImageIndex;
+					FlipFlopImages(AudioTrackIndex, ImageIndex);
+					//CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[ImageIndex];
 					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
 					break;
 				}
-				else
+				else if(FMath::FloorToInt(CurrentTimeInTrack) >= 0.0f && FMath::FloorToInt(CurrentTimeInTrack) < FMath::FloorToInt(ChangeRate))
 				{
-					CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[0];
+					//UE_LOG(LogTemp, Warning, TEXT("Else ReClaculate Ran: bImageB %s"), bImageB ? TEXT("True") : TEXT("False"));
+					FlipFlopImages(AudioTrackIndex, 0);
 					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
 				}
 				//UE_LOG(LogTemp, Warning, TEXT("Index: %d"), i);
@@ -157,31 +198,14 @@ void AAudioManager::UpdateImageBasedOnTrackTime()
 			float ChangeRate = CurrentMaxTimeInTrack / Count;
 			if (CurrentTimeInTrack > ChangeRate * (CurrentImageIndex + 1))
 			{
-				// It should be impossible for index to go out of bounds
-				// using this method of interval swapping
 				++CurrentImageIndex;
+
 				// Just in case, rounding of seconds goes wierd, clamp to count
 				if (CurrentImageIndex > Count) CurrentImageIndex = Count;
-				CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[CurrentImageIndex];
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, GetWorld()->GetDeltaSeconds(), FColor::Red, FString::Printf(TEXT("Change Image: %d, Count: %d"), CurrentImageIndex, Count));
-				}
-			}
-			else
-			{
-				// Set to original image
-				//SetCurrentBackgroundImageAtIndex(Index);
+
+				FlipFlopImages(AudioTrackIndex, CurrentImageIndex);
 			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("NO IMAGES IN ARRAY?"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("DATABASE NULL"));
 	}
 }
 
@@ -205,6 +229,27 @@ void AAudioManager::DoAsyncInitialise()
 void AAudioManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Check for which image should be visible and which one shouldnt
+	switch (bImageB)
+	{
+		case true:
+		{
+			ImageAlphaA -= DeltaTime / FadeSpeed;
+			ImageAlphaA = FMath::Clamp(ImageAlphaA, 0.0f, 1.0f);
+			ImageAlphaB += DeltaTime / FadeSpeed;
+			ImageAlphaB = FMath::Clamp(ImageAlphaB, 0.0f, 1.0f);
+			break;
+		}
+		case false:
+		{
+			ImageAlphaA += DeltaTime / FadeSpeed;
+			ImageAlphaA = FMath::Clamp(ImageAlphaA, 0.0f, 1.0f);
+			ImageAlphaB -= DeltaTime / FadeSpeed;
+			ImageAlphaB = FMath::Clamp(ImageAlphaB, 0.0f, 1.0f);
+			break;
+		}
+	}
 
 	BeginAudioTimer(DeltaTime);
 }
@@ -327,6 +372,12 @@ void AAudioManager::NextTrack(bool Direction)
 
 	// Stop Current Track
 	PauseAudio();
+
+	// Reset Previous Indexes for all tracks
+	for (size_t i = 0; i < Audios.Num(); i++)
+	{
+		Audios[i].PreviousImageIndex = -1;
+	}
 
 	SetTimeInTrack(0.0f);
 	// Doing this here, in case we find a way to dynamically reallocate the array

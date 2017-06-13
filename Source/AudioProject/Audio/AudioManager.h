@@ -38,7 +38,10 @@ private:
 
 	/** Pointer to current image from database*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
-		UTexture2D* CurrentBackgroundImage;
+		UTexture2D* CurrentBackgroundImageA;
+
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		UTexture2D* CurrentBackgroundImageB;
 
 private:
 	/** Flag to determine what should occur at the end of a song*/
@@ -56,6 +59,9 @@ private:
 	/** Alternate flag to autoplay, used to determine whether same song should repeat*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		uint32 bLoop : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		uint32 bImageB : 1;
 
 private:
 	/** Current array index from audios in database*/
@@ -79,6 +85,16 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		float CurrentMaxTimeInTrack = 1.0f;
 
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		float ImageAlphaA = 1.0f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		float ImageAlphaB = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		float FadeSpeed = 3.0f;
+
+
 private:
 	/** Loads and begins playing audio using singletons asset loader*/
 	void DoAsyncLoadAudio();
@@ -94,6 +110,8 @@ private:
 
 	/** Used to launch next track during autoplay mode, but also sets song to restart if loop mode*/
 	void AutoPlayNextTrack();
+
+	void FlipFlopImages(int AudioIndex, int ImageIndex);
 
 	/** Bound function to call AutoPlayNextTrack, if requirements are met*/
 	UFUNCTION()
@@ -160,14 +178,29 @@ public:
 		return Normalisedtime > 0.0f ? Normalisedtime : 0.0f;
 	}
 
+	FORCEINLINE float GetImageAlphaA() const
+	{
+		return ImageAlphaA;
+	}
+
+	FORCEINLINE float GetImageAlphaB() const
+	{
+		return ImageAlphaB;
+	}
+
 	FORCEINLINE float GetMaxTime() const
 	{
 		return CurrentMaxTimeInTrack;
 	}
 
-	FORCEINLINE UTexture2D* GetCurrentBackgroundImage() const
+	FORCEINLINE UTexture2D* GetCurrentBackgroundImageA() const
 	{
-		return CurrentBackgroundImage;
+		return CurrentBackgroundImageA;
+	}
+
+	FORCEINLINE UTexture2D* GetCurrentBackgroundImageB() const
+	{
+		return CurrentBackgroundImageB;
 	}
 
 	FORCEINLINE int GetCurrentIndex() const

@@ -9,6 +9,24 @@
  * 
  */
 
+//USTRUCT()
+//struct FImage
+//{
+//	GENERATED_USTRUCT_BODY()
+//
+//	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The BG Image"))
+//		UTexture2D* BackgroundImage;
+//
+//	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Prev Image Index"))
+//		int32 PreviousImageIndex;
+//
+//	FImage()
+//	{
+//		BackgroundImage = nullptr;
+//		PreviousImageIndex = -1;
+//	}
+//};
+
 USTRUCT()
 struct FAudio 
 {
@@ -23,6 +41,9 @@ struct FAudio
 	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio ID"))
 		int32 AudioID;
 
+	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Prev Image Index"))
+		int32 PreviousImageIndex;
+
 	/** Image relevant to song being played*/
 	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio Image"))
 		TArray<UTexture2D*> BackgroundImageArray;
@@ -36,6 +57,7 @@ struct FAudio
 	{
 		AudioName = "";
 		AudioID = 0;
+		PreviousImageIndex = -1;
 		BackgroundImageArray = { nullptr };
 		AudioResource = FStringAssetReference("");
 	}

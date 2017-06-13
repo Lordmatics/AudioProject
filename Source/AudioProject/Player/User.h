@@ -5,6 +5,9 @@
 #include "GameFramework/Pawn.h"
 #include "User.generated.h"
 
+// This class acts primarily as my interface between audiomanager and UMG
+// Since coding with Unreals Widgets is kinda a pain
+
 UCLASS()
 class AUDIOPROJECT_API AUser : public APawn
 {
@@ -75,7 +78,10 @@ private:
 
 	/** Returns pointer to stored background image based off of the audio database*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
-		UTexture2D* GetBackgroundImage();
+		UTexture2D* GetBackgroundImageA();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		UTexture2D* GetBackgroundImageB();
 
 	/** Flip Flops the Auto play bool, and adjusts the loop bool appropriately*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
@@ -92,6 +98,13 @@ private:
 	/** Used on release of timeline scrubber, to reconfigure BG image*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void ReCalculateBackgroundImage();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float GetAlphaA();
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		float GetAlphaB();
+
 public:
 	// Sets default values for this pawn's properties
 	AUser();

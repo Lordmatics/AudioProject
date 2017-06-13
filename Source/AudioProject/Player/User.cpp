@@ -185,11 +185,20 @@ float AUser::GetPitch()
 	return 1.0f;
 }
 
-UTexture2D* AUser::GetBackgroundImage()
+UTexture2D* AUser::GetBackgroundImageA()
 {
 	if (AudioManager != nullptr)
 	{
-		return AudioManager->GetCurrentBackgroundImage();
+		return AudioManager->GetCurrentBackgroundImageA();
+	}
+	return nullptr;
+}
+
+UTexture2D* AUser::GetBackgroundImageB()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetCurrentBackgroundImageB();
 	}
 	return nullptr;
 }
@@ -226,4 +235,22 @@ void AUser::ReCalculateBackgroundImage()
 	{
 		AudioManager->RecalculateImage();
 	}
+}
+
+float AUser::GetAlphaA()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetImageAlphaA();
+	}
+	return 1.0f;
+}
+
+float AUser::GetAlphaB()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->GetImageAlphaB();
+	}
+	return 0.0f;
 }
