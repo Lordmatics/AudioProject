@@ -30,16 +30,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Audio")	
 		class USavedData* SavedData;
 
+	/** Store the structs once for performance*/
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		TArray<FAudio> Audios;
 
 	/** Filled in through Asset Loader from Singleton*/
 	FStringAssetReference AudioAssetToLoad;
 
-	/** Pointer to current image from database*/
+	/** Pointer to image A from database*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		UTexture2D* CurrentBackgroundImageA;
 
+	/** Pointer to image B from database*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		UTexture2D* CurrentBackgroundImageB;
 
@@ -60,8 +62,15 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		uint32 bLoop : 1;
 
+	/** Flag to determine which image is currently active A or B - for fading*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		uint32 bImageB : 1;
+
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		TArray<int32> LoopSettings = { 0 , 1 , 2 };
+
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		LoopConfig CurrentLoopConfig = LoopConfig::E_Off;
 
 private:
 	/** Current array index from audios in database*/
@@ -85,12 +94,15 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		float CurrentMaxTimeInTrack = 1.0f;
 
+	/** Transparency value for A*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		float ImageAlphaA = 1.0f;
 
+	/** Transparency value for B*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		float ImageAlphaB = 0.0f;
 
+	/** Speed of transition to complete in seconds*/
 	UPROPERTY(EditAnywhere, Category = "Audio")
 		float FadeSpeed = 3.0f;
 
@@ -111,7 +123,11 @@ private:
 	/** Used to launch next track during autoplay mode, but also sets song to restart if loop mode*/
 	void AutoPlayNextTrack();
 
+	/** Helper Function to handle managing which image should fade into what*/
 	void FlipFlopImages(int AudioIndex, int ImageIndex);
+
+	/** Update The fading progression throughout the playback of the tracks*/
+	void UpdateImageBasedOnTrackTime();
 
 	/** Bound function to call AutoPlayNextTrack, if requirements are met*/
 	UFUNCTION()
@@ -130,11 +146,13 @@ public:
 	// True = Next , False = Prev
 	void NextTrack(bool Direction = true);
 	
+	/** Function that alternates between autoplay and loop*/
 	bool ToggleAutoPlay();
 
-	void RecalculateImage();
+	LoopConfig ToggleSettings();
 
-	void UpdateImageBasedOnTrackTime();
+	/** Update the fading progression when the track gets changed suddenly by the user*/
+	void RecalculateImage();
 
 	// Inline Setters
 	void SetCurrentBackgroundImageAtIndex(int Index);

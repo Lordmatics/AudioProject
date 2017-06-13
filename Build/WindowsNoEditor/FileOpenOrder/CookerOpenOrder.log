@@ -222,8 +222,9 @@
 "../../../AudioProject/Content/Art/Images/PrevTrack_Hover.uasset" 221
 "../../../AudioProject/Content/Art/Images/PrevTrack_White.uasset" 222
 "../../../AudioProject/Content/Art/Images/Speed_ImageText.uasset" 223
-"../../../AudioProject/Content/Art/Images/Volume_Text.uasset" 224
-"../../../AudioProject/Content/Audio/Sound_Effects/HitSound2.uasset" 225
-"../../../AudioProject/Content/UMG/Audio_Widget.uasset" 226
-"../../../AudioProject/Content/Maps/AudioMap.umap" 227
-"../../../Engine/Content/Maps/Entry.umap" 228
+"../../../AudioProject/Content/Art/Images/TransparentImage.uasset" 224
+"../../../AudioProject/Content/Art/Images/Volume_Text.uasset" 225
+"../../../AudioProject/Content/Audio/Sound_Effects/HitSound2.uasset" 226
+"../../../AudioProject/Content/UMG/Audio_Widget.uasset" 227
+"../../../AudioProject/Content/Maps/AudioMap.umap" 228
+"../../../Engine/Content/Maps/Entry.umap" 229

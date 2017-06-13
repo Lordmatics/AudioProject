@@ -212,6 +212,15 @@ bool AUser::ToggleAutoPlay()
 	return false;
 }
 
+LoopConfig AUser::ToggleSettings()
+{
+	if (AudioManager != nullptr)
+	{
+		return AudioManager->ToggleSettings();
+	}
+	return LoopConfig::E_Off;
+}
+
 bool AUser::IsTrackFinished()
 {
 	if (AudioManager != nullptr)

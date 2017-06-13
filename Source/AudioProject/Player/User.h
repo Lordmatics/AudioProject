@@ -87,6 +87,9 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool ToggleAutoPlay();
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		LoopConfig ToggleSettings();
+
 	/** Returns whether or not the current track has reached the end minus a very short buffer*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool IsTrackFinished();

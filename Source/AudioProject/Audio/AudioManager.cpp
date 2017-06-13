@@ -71,7 +71,6 @@ void AAudioManager::OnAudioFinished()
 	if (CurrentTimeInTrack >= CurrentMaxTimeInTrack - 0.5f)
 	{
 		AutoPlayNextTrack();
-
 	}
 	UE_LOG(LogTemp, Warning, TEXT("OnAudioFinshed"));
 }
@@ -92,18 +91,14 @@ void AAudioManager::FlipFlopImages(int AudioIndex, int ImageIndex)
 {
 	if (AudioDataBase->GetImageArrayLengthAtIndex(AudioIndex) > 0)
 	{
-		// Flip Flop
-		// For slider, rewinding song
-		// need to check if new image, is different from previous image
-
 		// This prevent fading into the same image
-		UE_LOG(LogTemp, Warning, TEXT("Prev Index: %d"), Audios[AudioTrackIndex].PreviousImageIndex);
 		if (ImageIndex != Audios[AudioIndex].PreviousImageIndex)
 		{
 			bImageB = !bImageB;
-			UE_LOG(LogTemp, Warning, TEXT("Alternated Image: bImageB %s"), bImageB ? TEXT("True") : TEXT("False"));
 		}
 
+		// This handles the actual swapping
+		// The Fade is done in Tick
 		Audios[AudioIndex].PreviousImageIndex = ImageIndex;
 		switch (bImageB)
 		{
@@ -118,35 +113,33 @@ void AAudioManager::FlipFlopImages(int AudioIndex, int ImageIndex)
 				break;
 			}
 		}
-
 	}
 }
 
+// Basically a quick reset, to original image
 void AAudioManager::SetCurrentBackgroundImageAtIndex(int Index)
 {
 	if (AudioDataBase != nullptr)
 	{
-		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
 		FlipFlopImages(Index, 0);	
 	}
-	// Logic to update fade times
 }
 
+// This check is for when the time suddenly changes,
+// I.e when the user, restarts the song, changes track
+// Moves the timeline etc.
+// And Determines the correct image to be displayed
 void AAudioManager::RecalculateImage()
 {
 	if (AudioDataBase != nullptr)
 	{
-		// TEST RESET PREV INDEX?
-		//for (size_t i = 0; i < Audios.Num(); i++)
-		//{
-		//	Audios[i].PreviousImageIndex = -1;
-		//}
-
 		int Count = AudioDataBase->GetImageArrayLengthAtIndex(AudioTrackIndex);
 		if (Count > 0)
 		{
 			float ChangeRate = CurrentMaxTimeInTrack / Count;
 
+			// Loop essentially, works backwards to find out which image shouldbe displayed at any given time
+			// when this refresh function runs - most noticably, when you move the timeline
 			int i = Count - 1;
 			while (i >= 0)
 			{
@@ -157,44 +150,32 @@ void AAudioManager::RecalculateImage()
 				{
 					// Prevent any out of bounds exception
 					int ImageIndex = i + 1 >= Count ? Count - 1 : i + 1;
-					//ImageIndex + Audios[AudioTrackIndex].PreviousImageIndex >= Count ? Count - 1 : Audios[AudioTrackIndex].PreviousImageIndex;
 
-					//UE_LOG(LogTemp, Warning, TEXT("Fade image to: %d , bImageB %s"),ImageIndex, bImageB ? TEXT("True") : TEXT("False"));
+					// Update current image, so the every frame check doesnt snap to an image
+					// inbetween prev and new index
 					CurrentImageIndex = ImageIndex;
 					FlipFlopImages(AudioTrackIndex, ImageIndex);
-					//CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[ImageIndex];
-					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
 					break;
 				}
 				else if(FMath::FloorToInt(CurrentTimeInTrack) >= 0.0f && FMath::FloorToInt(CurrentTimeInTrack) < FMath::FloorToInt(ChangeRate))
 				{
-					//UE_LOG(LogTemp, Warning, TEXT("Else ReClaculate Ran: bImageB %s"), bImageB ? TEXT("True") : TEXT("False"));
 					FlipFlopImages(AudioTrackIndex, 0);
-					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
 				}
-				//UE_LOG(LogTemp, Warning, TEXT("Index: %d"), i);
 				i--;
 			}
 		}
 	}
-
 }
 
+// This check is for whilst the current track is playing
+// And determines the correct image to be displayed
 void AAudioManager::UpdateImageBasedOnTrackTime()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Updating?"));
 	if (AudioDataBase != nullptr)
 	{
-		// Optimise? Store this on begin play?
-		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
 		int Count = AudioDataBase->GetImageArrayLengthAtIndex(AudioTrackIndex);
 		if (Count > 0)
 		{
-			// Example
-			// Duration 180s
-			// 2 Images
-			// Change Rate - every 90s
-			// CurrentTime > 90, use second image, else use first image
 			float ChangeRate = CurrentMaxTimeInTrack / Count;
 			if (CurrentTimeInTrack > ChangeRate * (CurrentImageIndex + 1))
 			{
@@ -225,7 +206,11 @@ void AAudioManager::DoAsyncInitialise()
 	}
 }
 
-// Called every frame
+// It was either this, or make animations in UMG.
+// And honestly, this is far easier to manage, since i can blend this way
+// Manipulating floats like this every frame isn't too bad, but could be optimised,
+// To only occur when we detect a change, however,
+// the effort to implement that won't make up for the performance gains
 void AAudioManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -258,6 +243,9 @@ void AAudioManager::BeginAudioTimer(float DeltaTime)
 {
 	if (IsSoundPlaying())
 	{
+		// Pitch acts as a speed mofifier
+		// NOTE: This is not compatible on mobile devices sadly
+		// I did a mobile build for fun.
 		CurrentTimeInTrack += DeltaTime * GetPitch();
 		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
 
@@ -275,6 +263,7 @@ void AAudioManager::AutoPlayNextTrack()
 	else
 	{
 		bTrackFinished = true;
+		// This check is since this runs, "OnAudioFinished" 
 		if (CheckForReplay())
 		{
 			PlayAudioFromStart();
@@ -326,11 +315,9 @@ void AAudioManager::PlayAudio()
 	{
 		TArray<FStringAssetReference> AudioToLoad;
 		FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
-		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
 		AudioAssetToLoad = Audios[AudioTrackIndex].AudioResource.ToStringReference();
 		AudioToLoad.AddUnique(AudioAssetToLoad);
 		Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncLoadAudio));
-		//AudioComponentA->SetSound(AudioDataBase->GetAudioAtIndex(AudioTrackIndex).AudioResource);
 	}
 }
 
@@ -340,17 +327,9 @@ void AAudioManager::DoAsyncLoadAudio()
 	check(AudioAssetToLoad.ResolveObject() != nullptr && World != nullptr && AudioComponentA != nullptr)
 	{
 		DoAsyncInitialise();
-		//UObject* NewTrack = AudioAssetToLoad.ResolveObject(); 	// Creates a pointer to store the loaded object
-		//USoundWave* Track = Cast<USoundWave>(NewTrack);
-		//if (Track != nullptr)
-		//{
-		//	CurrentMaxTimeInTrack = Track->GetDuration();
-		//	AudioComponentA->SetSound(Track);
-			bSongChanged = false;
-			bTrackFinished = false;
-			AudioComponentA->Play(CurrentTimeInTrack);
-		//}
-		//UE_LOG(LogTemp, Warning, TEXT("MaxTime: %f"), CurrentMaxTimeInTrack);
+		bSongChanged = false;
+		bTrackFinished = false;
+		AudioComponentA->Play(CurrentTimeInTrack);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("ASync Load"));
 }
@@ -382,13 +361,12 @@ void AAudioManager::NextTrack(bool Direction)
 	SetTimeInTrack(0.0f);
 	// Doing this here, in case we find a way to dynamically reallocate the array
 	// So if we could load new audio files during runtime, or through a folder etc.
-	// Could potentially use a linked list, since, if this is possible
-	// the max elements in the list would be dynamic
+	// Tried to write an importer / parser for wav -> USoundWave files, but failed.
 	int Count = AudioDataBase ? AudioDataBase->GetArrayLength() : 2;
 
 	// Increment / Decrement TrackIndex
 	Direction ? AudioTrackIndex++ : AudioTrackIndex--;
-	//AudioTrackIndex++;
+
 	bSongChanged = true;
 	if (AudioTrackIndex > Count - 1)
 	{
@@ -406,8 +384,54 @@ void AAudioManager::NextTrack(bool Direction)
 
 }
 
+LoopConfig AAudioManager::ToggleSettings()
+{
+	switch (CurrentLoopConfig)
+	{
+		case LoopConfig::E_AutoPlay:
+		{
+			bAutoPlay = false;
+			bLoop = true;
+			CurrentLoopConfig = LoopConfig::E_Loop;
+			// Check for instant loop
+			if (CurrentTimeInTrack >= CurrentMaxTimeInTrack)
+			{
+				PlayAudioFromStart();
+			}
+			break;
+		}
+		case LoopConfig::E_Loop:
+		{
+			bAutoPlay = false;
+			bLoop = false;
+			CurrentLoopConfig = LoopConfig::E_Off;
+			break;
+		}
+		case LoopConfig::E_Off:
+		{
+			bAutoPlay = true;
+			bLoop = false;
+			CurrentLoopConfig = LoopConfig::E_AutoPlay;
+			// Check for instant autoplay
+			if (CurrentTimeInTrack >= CurrentMaxTimeInTrack)
+			{
+				AutoPlayNextTrack();
+			}
+			break;
+		}
+	}
+	return CurrentLoopConfig;
+}
+
+// Deprecated - I'll leave it here so you can see the first attempt
+// Changing requirements made me rewrite this
 bool AAudioManager::ToggleAutoPlay()
 {
+
+	// Note to self, this isn't the best implementation
+	// Might be better off enum-ing this for
+	// AutoPlay, Loop, Neither
+
 	// Logically, what this'll do, if you toggle to autoplay
 	// At the end of a track already
 	// It should know to proceed to the next track without further input

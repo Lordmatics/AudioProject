@@ -27,6 +27,14 @@
 //	}
 //};
 
+UENUM(BlueprintType)        //"BlueprintType" is essential specifier//256 entries max
+enum class LoopConfig : uint8
+{
+	E_Off = 0     UMETA(DisplayName = "None"),
+	E_AutoPlay         UMETA(DisplayName = "Auto"),
+	E_Loop         UMETA(DisplayName = "Loop"),
+};
+
 USTRUCT()
 struct FAudio 
 {
