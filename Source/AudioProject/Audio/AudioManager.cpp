@@ -115,10 +115,14 @@ void AAudioManager::RecalculateImage()
 			int i = Count - 1;
 			while (i >= 0)
 			{
+				// If you drag all the way to end, dont do anything, since about to change song / stop song
+				if (CurrentTimeInTrack > CurrentMaxTimeInTrack - 0.5f) break;
 				bool Condition = FMath::FloorToInt(CurrentTimeInTrack) >= (FMath::FloorToInt(ChangeRate) * (i + 1));
 				if (Condition)
 				{
-					CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[i + 1];
+					// Prevent any out of bounds exception
+					int ImageIndex = i + 1 >= Count ? Count - 1 : i + 1;
+					CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[ImageIndex];
 					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
 					break;
 				}
@@ -240,6 +244,7 @@ void AAudioManager::PlayAudioFromStart()
 
 	// Reset timer in track + Reset BG image index
 	SetTimeInTrack(0.0f);
+	RecalculateImage();
 
 	// Resume from the beginning
 	if (AudioComponentA != nullptr)
