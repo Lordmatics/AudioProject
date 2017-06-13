@@ -12,10 +12,11 @@ AUser::AUser()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ConstructorHelpers::FClassFinder<AAudioManager> MyAudioManager(TEXT("/Game/BlueprintExtensions/Audio/BP_AudioManager"));
-	if (MyAudioManager.Succeeded())
-	{
+	//if (MyAudioManager.Succeeded())
+	//{
+		// With the succeeded check it sometimes fails to find it...
 		AudioManagerClass = MyAudioManager.Class;
-	}
+	//}
 }
 
 // Called when the game starts or when spawned
@@ -209,40 +210,6 @@ bool AUser::IsTrackFinished()
 		return AudioManager->HasTrackFinished();
 	}
 	return false;
-}
-
-void AUser::SavePitch(float CachedPitch)
-{
-	if (AudioManager != nullptr)
-	{
-		AudioManager->SavePitch(CachedPitch);
-	}
-}
-
-void AUser::SaveVolume(float CachedVolume)
-{
-	if (AudioManager != nullptr)
-	{
-		AudioManager->SaveVolume(CachedVolume);
-	}
-}
-
-float AUser::LoadPitch()
-{
-	if (AudioManager != nullptr)
-	{
-		return AudioManager->LoadPitch();
-	}
-	return 1.0f;
-}
-
-float AUser::LoadVolume()
-{
-	if (AudioManager != nullptr)
-	{
-		return AudioManager->LoadVolume();
-	}
-	return 1.0f;
 }
 
 void AUser::SetTimeBySlider(float NewTime)

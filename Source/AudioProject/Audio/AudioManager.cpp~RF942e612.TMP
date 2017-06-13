@@ -24,11 +24,10 @@ AAudioManager::AAudioManager()
 	AudioComponentA->SetupAttachment(MyRoot);
 
 	ConstructorHelpers::FObjectFinder<UAudioDataBase> MyAudioDataBase(TEXT("/Game/Audio/AudioDataBase"));
-	//if (MyAudioDataBase.Succeeded())
-	//{
-		// Always needs to find this
+	if (MyAudioDataBase.Succeeded())
+	{
 		AudioDataBase = MyAudioDataBase.Object;
-	//}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -36,22 +35,23 @@ void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Bind Functions for Loading Saved Data
-	UWorld* const World = GetWorld();
-	if (World != nullptr)
-	{
-		AAudioProjectGameModeBase* GM = Cast<AAudioProjectGameModeBase>(World->GetAuthGameMode());
-		if (GM != nullptr)
-		{
-			GM->OnVolumeLoaded.AddDynamic(this, &AAudioManager::SetVolume);
-			GM->OnPitchLoaded.AddDynamic(this, &AAudioManager::SetPitch);
-		}
-	}
+	// Load in saved data
+	//USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	//if (LoadGameInstance != nullptr)
+	//{
+	//	SavedData = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
+	//}
+	//else
+	//{
+	//	SavedData = LoadGameInstance;
+	//}
+	//UE_LOG(LogTemp, Warning, TEXT("Load: %f %f"), SavedData->SavedPitch, SavedData->SavedVolume);
 
-	// Bind logic to when tracks have ended
+	UWorld* const World = GetWorld();
+
+
 	AudioComponentA->OnAudioFinished.AddDynamic(this, &AAudioManager::OnAudioFinished);
 
-	// Async Load First Track, ready for user to play
 	InitialiseMaxTime(0);
 }
 
@@ -287,25 +287,70 @@ FString AAudioManager::GetTrackName() const
 	return AudioDataBase->GetAudioAtIndex(AudioTrackIndex).AudioName;
 }
 
-void AAudioManager::SetPitch(float NewPitch)
+//////////////// SAVING AND LOADING ////////////////
+void AAudioManager::SavePitch(float NewPitch)
 {
-	if (AudioComponentA != nullptr)
+	if (SavedData == nullptr)
 	{
-		// Pitch / Speed Range - between 0.1f and MaxPitch
-		NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
-		AudioComponentA->SetPitchMultiplier(NewPitch);
-		// Dont save here - quite expensive
-		// Now doing it OnMouseEnd in UMG
+		SavedData = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
 	}
+	// If the cast somehow fails, exit to prevent fatal error
+	if (SavedData == nullptr) return;
+	SavedData->SavedPitch = NewPitch;
+
+	//USavedData* SaveGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	////NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
+	//SaveGameInstance->SavedPitch = NewPitch;
+	UE_LOG(LogTemp, Warning, TEXT("SavePitch : %f"), NewPitch);
+
+	UGameplayStatics::SaveGameToSlot(SavedData, SavedData->SaveSlotName, SavedData->UserIndex);
 }
 
-void AAudioManager::SetVolume(float NewVolume)
+void AAudioManager::SaveVolume(float NewVolume)
 {
-	if (AudioComponentA != nullptr)
+	if (SavedData == nullptr)
 	{
-		NewVolume = FMath::Clamp(NewVolume, 0.1f, 1.0f);
-		AudioComponentA->SetVolumeMultiplier(NewVolume);
-		// Dont save here - quite expensive
-		// Now doing it OnMouseEnd in UMG
+		SavedData = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
 	}
+	// If the cast somehow fails, exit to prevent fatal error
+	if (SavedData == nullptr) return;
+	SavedData->SavedVolume = NewVolume;
+
+	//USavedData* SaveGameInstance = Cast<USavedData>(UGameplayStatics::CreateSaveGameObject(USavedData::StaticClass()));
+	//SaveGameInstance->SavedVolume = NewVolume;
+	UE_LOG(LogTemp, Warning, TEXT("SaveVolume : %f"), NewVolume);
+
+	UGameplayStatics::SaveGameToSlot(SavedData, SavedData->SaveSlotName, SavedData->UserIndex);
+}
+
+float AAudioManager::LoadPitch()
+{
+	if (SavedData == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SavedData NULL : LoadPitch"));
+		return 0.5f;
+	}
+	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(SavedData->SaveSlotName, SavedData->UserIndex));
+	if (LoadGameInstance == nullptr) return 0.5f;
+
+	float NewPitch = LoadGameInstance->SavedPitch;
+	UE_LOG(LogTemp, Warning, TEXT("LoadPitch : %f"), NewPitch);
+	SetPitch(NewPitch);
+	return NewPitch;
+}
+
+float AAudioManager::LoadVolume()
+{
+	if (SavedData == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SavedData NULL : LoadVolume"));
+		return 0.5f;
+	}
+	USavedData* LoadGameInstance = Cast<USavedData>(UGameplayStatics::LoadGameFromSlot(SavedData->SaveSlotName, SavedData->UserIndex));
+	if (LoadGameInstance == nullptr) return 0.5f;
+	float NewVolume = LoadGameInstance->SavedVolume;
+	UE_LOG(LogTemp, Warning, TEXT("LoadVolume : %f"), NewVolume);
+	SetVolume(NewVolume);
+	return LoadGameInstance->SavedVolume;
+
 }

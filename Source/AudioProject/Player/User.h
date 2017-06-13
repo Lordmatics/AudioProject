@@ -85,22 +85,6 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		bool IsTrackFinished();
 
-	/** Updates saved pitch to file*/
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-		void SavePitch(float CachedPitch);
-
-	/** Updates saved volume to file*/
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-		void SaveVolume(float CachedVolume);
-
-	/** Loads saved pitch from file*/
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-		float LoadPitch();
-
-	/** Loads saved volume from file*/
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-		float LoadVolume();
-
 	/** Updates current song time, after being normalised by song time scrubber*/
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SetTimeBySlider(float NewTime);

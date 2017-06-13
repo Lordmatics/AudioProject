@@ -127,28 +127,14 @@ public:
 
 	// Going to use pitch as a means to activate speed adjustments
 	// For fun
-	inline void SetPitch(float NewPitch)
-	{
-		if (AudioComponentA != nullptr)
-		{
-			// Pitch / Speed Range - between 0.1f and MaxPitch
-			NewPitch = FMath::Clamp(NewPitch, 0.1f / MaxPitch, 1.0f) * MaxPitch;
-			AudioComponentA->SetPitchMultiplier(NewPitch);
-			// Dont save here - quite expensive
-			// Now doing it OnMouseEnd in UMG
-		}
-	}
 
-	inline void SetVolume(float NewVolume)
-	{
-		if (AudioComponentA != nullptr)
-		{
-			NewVolume = FMath::Clamp(NewVolume, 0.1f, 1.0f);
-			AudioComponentA->SetVolumeMultiplier(NewVolume);
-			// Dont save here - quite expensive
-			// Now doing it OnMouseEnd in UMG
-		}
-	}
+	// These are UFUNCTION
+	// Since, they are bound to delegates in the game mode
+	UFUNCTION()
+		void SetPitch(float NewPitch);
+
+	UFUNCTION()
+		void SetVolume(float NewVolume);
 
 	// Inline Getters
 	FString GetTrackName() const;
@@ -208,15 +194,6 @@ public:
 		}
 		return false;
 	}
-
-	// Saving and Loading
-	void SavePitch(float NewPitch);
-
-	void SaveVolume(float NewVolume);
-
-	float LoadPitch();
-
-	float LoadVolume();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
