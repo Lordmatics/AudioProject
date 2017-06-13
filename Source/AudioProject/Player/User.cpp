@@ -11,12 +11,12 @@ AUser::AUser()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ConstructorHelpers::FClassFinder<AAudioManager> MyAudioManager(TEXT("/Game/BlueprintExtensions/Audio/BP_AudioManager"));
-	//if (MyAudioManager.Succeeded())
-	//{
+	ConstructorHelpers::FClassFinder<AAudioManager> MyAudioManager(TEXT("'/Game/BlueprintExtensions/Audio/BP_AudioManager.BP_AudioManager_C'"));
+	if (MyAudioManager.Succeeded())
+	{
 		// With the succeeded check it sometimes fails to find it...
 		AudioManagerClass = MyAudioManager.Class;
-	//}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -217,5 +217,13 @@ void AUser::SetTimeBySlider(float NewTime)
 	if (AudioManager != nullptr)
 	{
 		AudioManager->SetTimeInTrackBySlider(NewTime);
+	}
+}
+
+void AUser::ReCalculateBackgroundImage()
+{
+	if (AudioManager != nullptr)
+	{
+		AudioManager->RecalculateImage();
 	}
 }

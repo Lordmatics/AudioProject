@@ -25,7 +25,7 @@ struct FAudio
 
 	/** Image relevant to song being played*/
 	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio Image"))
-		UTexture2D* BackgroundImage;
+		TArray<UTexture2D*> BackgroundImageArray;
 
 	/** Pointer to asset to load dynamically, of type SoundWave*/
 	UPROPERTY(EditAnywhere, Category = "Audio_Data", meta = (ToolTip = "The Audio Asset"))
@@ -36,7 +36,7 @@ struct FAudio
 	{
 		AudioName = "";
 		AudioID = 0;
-		BackgroundImage = nullptr;
+		BackgroundImageArray = { nullptr };
 		AudioResource = FStringAssetReference("");
 	}
 };
@@ -69,5 +69,10 @@ public:
 		return Audios[Index];
 	}
 	
+	FORCEINLINE int GetImageArrayLengthAtIndex(int32 Index) const
+	{
+		if (Index >= GetArrayLength()) return 0;
+		return Audios[Index].BackgroundImageArray.Num();
+	}
 	
 };

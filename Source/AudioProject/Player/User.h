@@ -89,6 +89,9 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 		void SetTimeBySlider(float NewTime);
 
+	/** Used on release of timeline scrubber, to reconfigure BG image*/
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+		void ReCalculateBackgroundImage();
 public:
 	// Sets default values for this pawn's properties
 	AUser();

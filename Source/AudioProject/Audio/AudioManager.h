@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "Audio/AudioDataBase.h"
 #include "AudioManager.generated.h"
 
 
@@ -28,6 +29,9 @@ private:
 	/** Storage for remembering volume and pitch*/
 	UPROPERTY(EditAnywhere, Category = "Audio")	
 		class USavedData* SavedData;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+		TArray<FAudio> Audios;
 
 	/** Filled in through Asset Loader from Singleton*/
 	FStringAssetReference AudioAssetToLoad;
@@ -57,6 +61,10 @@ private:
 	/** Current array index from audios in database*/
 	UPROPERTY(VisibleAnywhere, Category = "Audio")
 		int AudioTrackIndex = 0;
+
+	/** Current array index for BG images in database*/
+	UPROPERTY(VisibleAnywhere, Category = "Audio")
+		int CurrentImageIndex = 0;
 
 private:
 	/** Modifier for slider Pitch*/
@@ -90,7 +98,6 @@ private:
 	/** Bound function to call AutoPlayNextTrack, if requirements are met*/
 	UFUNCTION()
 		void OnAudioFinished();
-
 public:	
 	// Sets default values for this actor's properties
 	AAudioManager();
@@ -107,6 +114,10 @@ public:
 	
 	bool ToggleAutoPlay();
 
+	void RecalculateImage();
+
+	void UpdateImageBasedOnTrackTime();
+
 	// Inline Setters
 	void SetCurrentBackgroundImageAtIndex(int Index);
 
@@ -116,6 +127,8 @@ public:
 		// Get Max Song Length - Check Limits
 		CurrentTimeInTrack = NewTime;
 		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
+		// Reset Image Index
+		CurrentImageIndex = 0;
 	}
 
 	// In Slider Values

@@ -2,7 +2,6 @@
 
 #include "AudioProject.h"
 #include "AudioManager.h"
-#include "Audio/AudioDataBase.h"
 #include "Utilities/AudioSingleton.h"
 #include "Utilities/StaticHelpers.h"
 #include "SaveFile/SavedData.h"
@@ -23,12 +22,12 @@ AAudioManager::AAudioManager()
 	AudioComponentA = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponentA"));
 	AudioComponentA->SetupAttachment(MyRoot);
 
-	ConstructorHelpers::FObjectFinder<UAudioDataBase> MyAudioDataBase(TEXT("/Game/Audio/AudioDataBase"));
-	//if (MyAudioDataBase.Succeeded())
-	//{
+	ConstructorHelpers::FObjectFinder<UAudioDataBase> MyAudioDataBase(TEXT("'/Game/Audio/AudioDataBase.AudioDataBase'"));
+	if (MyAudioDataBase.Succeeded())
+	{
 		// Always needs to find this
 		AudioDataBase = MyAudioDataBase.Object;
-	//}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -36,6 +35,14 @@ void AAudioManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (AudioDataBase != nullptr)
+	{
+		Audios = AudioDataBase->GetAudios();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DATABASE NULL - AUDIOS InValid"));
+	}
 	// Bind Functions for Loading Saved Data
 	UWorld* const World = GetWorld();
 	if (World != nullptr)
@@ -73,7 +80,7 @@ void AAudioManager::InitialiseMaxTime(int Index)
 {
 	TArray<FStringAssetReference> AudioToLoad;
 	FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
-	TArray<FAudio> Audios = AudioDataBase->GetAudios();
+	//TArray<FAudio> Audios = AudioDataBase->GetAudios();
 	AudioAssetToLoad = Audios[Index].AudioResource.ToStringReference();
 	AudioToLoad.AddUnique(AudioAssetToLoad);
 	Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncInitialise));
@@ -83,8 +90,95 @@ void AAudioManager::InitialiseMaxTime(int Index)
 
 void AAudioManager::SetCurrentBackgroundImageAtIndex(int Index)
 {
-	TArray<FAudio> Audios = AudioDataBase->GetAudios();
-	CurrentBackgroundImage = Audios[Index].BackgroundImage;
+	if (AudioDataBase != nullptr)
+	{
+		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
+		if (AudioDataBase->GetImageArrayLengthAtIndex(Index) > 0)
+		{
+			CurrentBackgroundImage = Audios[Index].BackgroundImageArray[0];
+		}
+	}
+
+
+	// Logic to update fade times
+}
+
+void AAudioManager::RecalculateImage()
+{
+	if (AudioDataBase != nullptr)
+	{
+		int Count = AudioDataBase->GetImageArrayLengthAtIndex(AudioTrackIndex);
+		if (Count > 0)
+		{
+			float ChangeRate = CurrentMaxTimeInTrack / Count;
+
+			int i = Count - 1;
+			while (i >= 0)
+			{
+				bool Condition = FMath::FloorToInt(CurrentTimeInTrack) >= (FMath::FloorToInt(ChangeRate) * (i + 1));
+				if (Condition)
+				{
+					CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[i + 1];
+					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
+					break;
+				}
+				else
+				{
+					CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[0];
+					//UE_LOG(LogTemp, Warning, TEXT("Index: %d, Condition: %s"), i, Condition ? TEXT("True") : TEXT("False"));
+				}
+				//UE_LOG(LogTemp, Warning, TEXT("Index: %d"), i);
+				i--;
+			}
+		}
+	}
+
+}
+
+void AAudioManager::UpdateImageBasedOnTrackTime()
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Updating?"));
+	if (AudioDataBase != nullptr)
+	{
+		// Optimise? Store this on begin play?
+		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
+		int Count = AudioDataBase->GetImageArrayLengthAtIndex(AudioTrackIndex);
+		if (Count > 0)
+		{
+			// Example
+			// Duration 180s
+			// 2 Images
+			// Change Rate - every 90s
+			// CurrentTime > 90, use second image, else use first image
+			float ChangeRate = CurrentMaxTimeInTrack / Count;
+			if (CurrentTimeInTrack > ChangeRate * (CurrentImageIndex + 1))
+			{
+				// It should be impossible for index to go out of bounds
+				// using this method of interval swapping
+				++CurrentImageIndex;
+				// Just in case, rounding of seconds goes wierd, clamp to count
+				if (CurrentImageIndex > Count) CurrentImageIndex = Count;
+				CurrentBackgroundImage = Audios[AudioTrackIndex].BackgroundImageArray[CurrentImageIndex];
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, GetWorld()->GetDeltaSeconds(), FColor::Red, FString::Printf(TEXT("Change Image: %d, Count: %d"), CurrentImageIndex, Count));
+				}
+			}
+			else
+			{
+				// Set to original image
+				//SetCurrentBackgroundImageAtIndex(Index);
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NO IMAGES IN ARRAY?"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DATABASE NULL"));
+	}
 }
 
 void AAudioManager::DoAsyncInitialise()
@@ -109,7 +203,6 @@ void AAudioManager::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	BeginAudioTimer(DeltaTime);
-
 }
 
 void AAudioManager::BeginAudioTimer(float DeltaTime)
@@ -118,6 +211,8 @@ void AAudioManager::BeginAudioTimer(float DeltaTime)
 	{
 		CurrentTimeInTrack += DeltaTime * GetPitch();
 		CurrentTimeInTrack = FMath::Clamp(CurrentTimeInTrack, 0.0f, CurrentMaxTimeInTrack);
+
+		UpdateImageBasedOnTrackTime();
 	}
 }
 
@@ -143,7 +238,7 @@ void AAudioManager::PlayAudioFromStart()
 	// Stop the track where it currently is
 	PauseAudio();
 
-	// Reset timer in track
+	// Reset timer in track + Reset BG image index
 	SetTimeInTrack(0.0f);
 
 	// Resume from the beginning
@@ -181,7 +276,7 @@ void AAudioManager::PlayAudio()
 	{
 		TArray<FStringAssetReference> AudioToLoad;
 		FStreamableManager& Loader = UAudioSingleton::Get().AssetLoader;
-		TArray<FAudio> Audios = AudioDataBase->GetAudios();
+		//TArray<FAudio> Audios = AudioDataBase->GetAudios();
 		AudioAssetToLoad = Audios[AudioTrackIndex].AudioResource.ToStringReference();
 		AudioToLoad.AddUnique(AudioAssetToLoad);
 		Loader.RequestAsyncLoad(AudioToLoad, FStreamableDelegate::CreateUObject(this, &AAudioManager::DoAsyncLoadAudio));
